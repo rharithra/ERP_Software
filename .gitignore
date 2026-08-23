@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+
+# Java / Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Uploads volume
+data/uploads/
+
+# Uploaded specs (local agent only)
+uploads/

@@ -1,0 +1,2 @@
+ALTER TABLE tenants
+    ALTER COLUMN currency TYPE VARCHAR(3);

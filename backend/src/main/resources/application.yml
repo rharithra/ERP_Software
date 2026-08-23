@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: retailflow-api
+  profiles:
+    default: local
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:38422}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+retailflow:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:38421,http://127.0.0.1:38421}
+
+logging:
+  level:
+    root: INFO
+    in.retailflow: INFO
+    org.springframework.security: WARN
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/retailflow}
+    username: ${DATABASE_USERNAME:retailflow}
+    password: ${DATABASE_PASSWORD:retailflow_dev}
+
+retailflow:
+  jwt:
+    secret: ${JWT_SECRET:local-dev-only-change-me-use-a-64-character-secret-key!!}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/retailflow_test}
+    username: ${TEST_DATABASE_USERNAME:retailflow}
+    password: ${TEST_DATABASE_PASSWORD:retailflow_dev}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    clean-disabled: false
+
+retailflow:
+  jwt:
+    secret: test-secret-only-for-automated-tests-not-for-production-use-32b
+    expiration-ms: 3600000
