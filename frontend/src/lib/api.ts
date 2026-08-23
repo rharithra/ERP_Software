@@ -66,6 +66,18 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const AUTH_ATTEMPT_PATHS = new Set(["/api/v1/auth/login", "/api/v1/auth/signup"]);
+
+export function handleUnauthorized(path: string) {
+  if (AUTH_ATTEMPT_PATHS.has(path)) {
+    return;
+  }
+  clearToken();
+  if (typeof window !== "undefined") {
+    window.location.assign("/login");
+  }
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -79,6 +91,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
   const response = await fetch(path, { ...init, headers });
   const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null;
+
+  if (response.status === 401) {
+    handleUnauthorized(path);
+  }
 
   if (!response.ok || !payload?.success) {
     throw new ApiRequestError(

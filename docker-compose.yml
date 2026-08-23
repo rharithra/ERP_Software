@@ -27,7 +27,7 @@ services:
       DATABASE_URL: jdbc:postgresql://postgres:5432/retailflow
       DATABASE_USERNAME: retailflow
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-retailflow_dev}
-      JWT_SECRET: ${JWT_SECRET:-local-dev-only-change-me-use-a-64-character-secret-key!!}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the environment. Generate a random 64+ character secret. Do not use the documented local-dev default on a VPS.}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:38421,http://127.0.0.1:38421}
     ports:
       - "38422:38422"

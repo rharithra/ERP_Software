@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -17,14 +17,25 @@ public class JwtService {
     private final SecretKey key;
     private final long expirationMs;
 
-    public JwtService(
-            @Value("${retailflow.jwt.secret}") String secret,
-            @Value("${retailflow.jwt.expiration-ms}") long expirationMs) {
+    @Autowired
+    public JwtService(JwtProperties jwtProperties) {
+        String secret = jwtProperties.getSecret();
         if (secret == null || secret.length() < 32) {
             throw new IllegalStateException("JWT_SECRET must be at least 32 characters");
         }
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expirationMs = expirationMs;
+        this.expirationMs = jwtProperties.getExpirationMs();
+    }
+
+    JwtService(String secret, long expirationMs) {
+        this(properties(secret, expirationMs));
+    }
+
+    private static JwtProperties properties(String secret, long expirationMs) {
+        JwtProperties jwtProperties = new JwtProperties();
+        jwtProperties.setSecret(secret);
+        jwtProperties.setExpirationMs(expirationMs);
+        return jwtProperties;
     }
 
     public String issueToken(UUID userId, String email, UUID tenantId, TenantRole role) {

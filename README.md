@@ -71,7 +71,12 @@ The UI listens on `http://localhost:38421` and proxies `/api` to the backend.
 
 ### Docker
 
+Docker Compose does **not** ship a JWT secret. Set `JWT_SECRET` in the environment or in a gitignored `.env` file. Compose refuses to start if it is missing. The Docker Spring profile also rejects the documented local-development default.
+
 ```bash
+cp .env.example .env
+# Put a unique 64+ character value in JWT_SECRET. Example:
+#   openssl rand -base64 48
 docker compose up --build
 ```
 
@@ -79,7 +84,11 @@ docker compose up --build
 - API: `http://localhost:38422`
 - Postgres: `localhost:5432`
 
-Do not commit real secrets. `JWT_SECRET` in Compose is a local default only.
+Do not commit real secrets. Runtime Docker verification must be done on a machine that has Docker; this environment may not have it.
+
+`mvn spring-boot:run` with profile `local` still works without `JWT_SECRET` and uses a **development-only** default documented in `application.yml`. Never use that value on a VPS.
+
+MANAGER is a valid API role for company profile GET/PUT, but Milestone 1 signup and UI only create OWNER. There is no manager invitation flow.
 
 ## Environment variables
 
@@ -88,7 +97,7 @@ Do not commit real secrets. `JWT_SECRET` in Compose is a local default only.
 | `DATABASE_URL` | API | JDBC URL |
 | `DATABASE_USERNAME` | API | Default `retailflow` |
 | `DATABASE_PASSWORD` | API | Local default in `.env.example` |
-| `JWT_SECRET` | API | At least 32 characters |
+| `JWT_SECRET` | API | Required for Docker/production (min 32 chars). Optional only for `local` profile |
 | `JWT_EXPIRATION_MS` | API | Default 8 hours |
 | `CORS_ALLOWED_ORIGINS` | API | Comma-separated origins |
 | `SERVER_PORT` | API | Default `38422` |
@@ -98,7 +107,7 @@ Do not commit real secrets. `JWT_SECRET` in Compose is a local default only.
 
 ```bash
 cd backend && mvn test
-cd frontend && npm run build
+cd frontend && npm test && npm run build
 ```
 
 Backend coverage in this milestone focuses on password hashing, JWT claims, signup/login, authorization, and tenant isolation (including RLS).

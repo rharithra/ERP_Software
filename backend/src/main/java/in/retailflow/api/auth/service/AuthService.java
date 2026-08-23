@@ -12,9 +12,9 @@ import in.retailflow.api.identity.domain.TenantRole;
 import in.retailflow.api.identity.domain.UserAccount;
 import in.retailflow.api.identity.repository.UserAccountRepository;
 import in.retailflow.api.security.jwt.JwtService;
+import in.retailflow.api.security.tenant.TenantBypass;
 import in.retailflow.api.security.tenant.TenantContext;
 import in.retailflow.api.security.tenant.TenantContext.TenantPrincipal;
-import in.retailflow.api.security.tenant.TenantSessionBinder;
 import in.retailflow.api.tenant.domain.Tenant;
 import in.retailflow.api.tenant.domain.TenantMembership;
 import in.retailflow.api.tenant.repository.TenantMembershipRepository;
@@ -38,26 +38,23 @@ public class AuthService {
     private final TenantMembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final TenantSessionBinder tenantSessionBinder;
 
     public AuthService(
             UserAccountRepository userAccountRepository,
             TenantRepository tenantRepository,
             TenantMembershipRepository membershipRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            TenantSessionBinder tenantSessionBinder) {
+            JwtService jwtService) {
         this.userAccountRepository = userAccountRepository;
         this.tenantRepository = tenantRepository;
         this.membershipRepository = membershipRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.tenantSessionBinder = tenantSessionBinder;
     }
 
+    @TenantBypass
     @Transactional
     public AuthResponse signup(SignupRequest request) {
-        tenantSessionBinder.enableRlsBypass();
         String email = request.email().trim().toLowerCase();
         if (userAccountRepository.existsByEmailIgnoreCase(email)) {
             throw new RetailflowException(
@@ -84,9 +81,9 @@ public class AuthService {
         return toAuthResponse(user, tenant, TenantRole.OWNER);
     }
 
+    @TenantBypass
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        tenantSessionBinder.enableRlsBypass();
         String email = request.email().trim().toLowerCase();
         UserAccount user = userAccountRepository
                 .findByEmailIgnoreCase(email)
@@ -107,7 +104,6 @@ public class AuthService {
     @Transactional(readOnly = true)
     public MeResponse me() {
         TenantPrincipal principal = TenantContext.require();
-        tenantSessionBinder.bindCurrentTenant(principal.tenantId());
         Tenant tenant = tenantRepository
                 .findById(principal.tenantId())
                 .orElseThrow(() -> new RetailflowException(

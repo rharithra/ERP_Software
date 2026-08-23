@@ -45,6 +45,7 @@ retailflow:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+    reject-known-dev-secret: false
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:38421,http://127.0.0.1:38421}
 
@@ -76,6 +77,10 @@ spring:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+
+retailflow:
+  jwt:
+    reject-known-dev-secret: true
 
 ---
 spring:

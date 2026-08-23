@@ -24,6 +24,11 @@ public final class TenantContext {
         return CURRENT.get();
     }
 
+    public static UUID getTenantId() {
+        TenantPrincipal principal = CURRENT.get();
+        return principal == null ? null : principal.tenantId();
+    }
+
     public static UUID requireTenantId() {
         return require().tenantId();
     }

@@ -1,6 +1,6 @@
 package in.retailflow.api.tenant.service;
 
-import in.retailflow.api.security.tenant.TenantSessionBinder;
+import in.retailflow.api.security.tenant.TenantBypass;
 import in.retailflow.api.tenant.domain.TenantMembership;
 import in.retailflow.api.tenant.repository.TenantMembershipRepository;
 import java.util.Optional;
@@ -12,17 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class MembershipQueryService {
 
     private final TenantMembershipRepository membershipRepository;
-    private final TenantSessionBinder tenantSessionBinder;
 
-    public MembershipQueryService(
-            TenantMembershipRepository membershipRepository, TenantSessionBinder tenantSessionBinder) {
+    public MembershipQueryService(TenantMembershipRepository membershipRepository) {
         this.membershipRepository = membershipRepository;
-        this.tenantSessionBinder = tenantSessionBinder;
     }
 
+    @TenantBypass
     @Transactional(readOnly = true)
     public Optional<TenantMembership> findActiveMembership(UUID userId, UUID tenantId) {
-        tenantSessionBinder.enableRlsBypass();
         return membershipRepository.findByUserIdAndTenantId(userId, tenantId);
     }
 }

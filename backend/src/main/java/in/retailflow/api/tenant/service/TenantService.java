@@ -3,7 +3,6 @@ package in.retailflow.api.tenant.service;
 import in.retailflow.api.common.exception.ErrorCodes;
 import in.retailflow.api.common.exception.RetailflowException;
 import in.retailflow.api.security.tenant.TenantContext;
-import in.retailflow.api.security.tenant.TenantSessionBinder;
 import in.retailflow.api.tenant.domain.Tenant;
 import in.retailflow.api.tenant.dto.TenantResponse;
 import in.retailflow.api.tenant.dto.UpdateTenantRequest;
@@ -17,11 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
-    private final TenantSessionBinder tenantSessionBinder;
 
-    public TenantService(TenantRepository tenantRepository, TenantSessionBinder tenantSessionBinder) {
+    public TenantService(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
-        this.tenantSessionBinder = tenantSessionBinder;
     }
 
     @Transactional(readOnly = true)
@@ -48,7 +45,6 @@ public class TenantService {
 
     private Tenant loadCurrentTenant() {
         UUID tenantId = TenantContext.requireTenantId();
-        tenantSessionBinder.bindCurrentTenant(tenantId);
         return tenantRepository
                 .findById(tenantId)
                 .orElseThrow(() -> new RetailflowException(
