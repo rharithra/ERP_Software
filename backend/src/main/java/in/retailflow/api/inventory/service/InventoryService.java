@@ -69,7 +69,8 @@ public class InventoryService {
     @Transactional(readOnly = true)
     public PageResponse<InventoryItemResponse> list(String query, UUID categoryId, InventoryStatus status, int page, int size) {
         var pageable = PageRequest.of(Math.max(page - 1, 0), clampSize(size), Sort.by("name").ascending());
-        var products = productQueryRepository.search(blankToNull(query), categoryId, status, pageable);
+        var products = productQueryRepository.search(
+                blankToNull(query), categoryId, status == null ? null : status.name(), pageable);
         List<UUID> ids = products.getContent().stream().map(Product::getId).toList();
         Map<UUID, InventoryBalance> balances = ids.isEmpty()
                 ? Map.of()

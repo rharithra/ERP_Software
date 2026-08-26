@@ -1,7 +1,6 @@
 package in.retailflow.api.inventory.repository;
 
 import in.retailflow.api.catalog.domain.Product;
-import in.retailflow.api.inventory.domain.InventoryStatus;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,17 +21,14 @@ public interface InventoryProductQueryRepository extends JpaRepository<Product, 
                 OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :q, '%')))
               AND (:categoryId IS NULL OR p.category.id = :categoryId)
               AND (:status IS NULL
-                OR (:status = in.retailflow.api.inventory.domain.InventoryStatus.OUT_OF_STOCK
-                    AND COALESCE(b.quantity, 0) = 0)
-                OR (:status = in.retailflow.api.inventory.domain.InventoryStatus.LOW_STOCK
-                    AND b.quantity > 0 AND b.quantity <= b.reorderLevel)
-                OR (:status = in.retailflow.api.inventory.domain.InventoryStatus.IN_STOCK
-                    AND COALESCE(b.quantity, 0) > COALESCE(b.reorderLevel, 0)))
+                OR (:status = 'OUT_OF_STOCK' AND COALESCE(b.quantity, 0) = 0)
+                OR (:status = 'LOW_STOCK' AND b.quantity > 0 AND b.quantity <= b.reorderLevel)
+                OR (:status = 'IN_STOCK' AND COALESCE(b.quantity, 0) > COALESCE(b.reorderLevel, 0)))
             """)
     Page<Product> search(
             @Param("q") String q,
             @Param("categoryId") UUID categoryId,
-            @Param("status") InventoryStatus status,
+            @Param("status") String status,
             Pageable pageable);
 
     @Query(
