@@ -7,10 +7,12 @@ import { GuestRoute } from "@/components/layout/guest-route";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { Toaster } from "@/components/ui/sonner";
 import { ComingSoonPage } from "@/pages/coming-soon-page";
+import { CategoriesPage } from "@/pages/categories-page";
 import { CompanyPage } from "@/pages/company-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { LandingPage } from "@/pages/landing-page";
 import { LoginPage } from "@/pages/login-page";
+import { ProductsPage } from "@/pages/products-page";
 import { SignupPage } from "@/pages/signup-page";
 
 const queryClient = new QueryClient();
@@ -43,8 +45,9 @@ export default function App() {
                 <Route path="/app" element={<AppShell />}>
                   <Route index element={<DashboardPage />} />
                   <Route path="company" element={<CompanyPage />} />
+                  <Route path="categories" element={<CategoriesPage />} />
                   <Route path="sales" element={<ComingSoonPage />} />
-                  <Route path="products" element={<ComingSoonPage />} />
+                  <Route path="products" element={<ProductsPage />} />
                   <Route path="inventory" element={<ComingSoonPage />} />
                   <Route path="customers" element={<ComingSoonPage />} />
                   <Route path="suppliers" element={<ComingSoonPage />} />

@@ -825,3 +825,29 @@ Remember:
 We are building a real product.
 
 Prioritize correctness, security, maintainability, UX quality, and business usefulness over simply generating a large amount of code.
+
+---
+
+# 33. Milestone 2 — Categories and products (COMPLETE)
+
+Milestone 1 and Milestone 1 Hardening are complete. Milestone 2 is the product catalog only.
+
+## Models
+
+**Category** — tenant-owned: id (UUID), name (required, unique per tenant), description (optional), active, createdAt, updatedAt. No hierarchy. Deactivate instead of hard delete.
+
+**Product** — tenant-owned: id, category (required, same tenant), name, sku (unique per tenant), barcode (optional, unique per tenant when set), description, costPrice, sellingPrice (`BigDecimal` / `NUMERIC`, never float), gstRate (0/5/12/18/28), unit (PCS, KG, G, L, ML, BOX, PACK, BOTTLE), active, timestamps.
+
+Products cannot reference another tenant’s category (Hibernate tenant filter + composite FK). Tenant id is never accepted from the client.
+
+## APIs
+
+`/api/v1/categories` and `/api/v1/products` with list (search, status, pagination), get, create, update, patch status. Writes: OWNER/MANAGER. Reads: OWNER/MANAGER/CASHIER. `@TenantBypass` is not used.
+
+## UI
+
+`/app/categories` and `/app/products` inside the ERP shell. Inventory, purchases, sales, customers, suppliers, reports remain coming-soon.
+
+## Out of scope
+
+Stock quantities, warehouses, purchases, POS, invoices, expenses, employees, reports, AI, barcode scanners.

@@ -2,15 +2,15 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, and general stores.
 
-Milestone 1 delivers the commercial foundation only:
+Milestones 1 and 1 Hardening are complete. Milestone 2 adds a tenant-scoped product catalog:
 
-- company self-signup
-- owner account with BCrypt passwords
-- JWT login
-- tenant isolation in the API and in PostgreSQL row-level security
-- an ERP shell with dashboard, company profile, and coming-soon modules
+- company self-signup, JWT login, BCrypt passwords
+- tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
+- ERP shell with dashboard and company profile
+- categories and products (SKU, barcode, prices, GST slab, unit)
+- remaining modules stay coming-soon (inventory, purchases, sales/POS, invoices)
 
-Sales, inventory, purchases, and GST invoices are intentionally not implemented yet.
+Inventory quantities, purchases, sales, and GST invoices are intentionally not implemented yet.
 
 ## Architecture
 
@@ -110,19 +110,40 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend coverage in this milestone focuses on password hashing, JWT claims, signup/login, authorization, and tenant isolation (including RLS).
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), and catalog CRUD/isolation.
 
 ## Current milestone
 
-**Milestone 1 — Foundation + authentication + multi-tenant onboarding**
+**Milestone 2 — Categories + products (catalog)**
 
-Done when a retailer can sign up, become OWNER of a company, sign in, and open a tenant-scoped ERP shell.
+Done when a retailer can maintain categories and products inside their own tenant, with tenant-scoped SKU/barcode uniqueness and GST/unit master data. Inventory stock is **not** part of this milestone.
+
+**Milestone 1** and **Milestone 1 Hardening** are complete.
+
+## Catalog API (authenticated; tenant from JWT)
+
+| Method | Path | Roles |
+| --- | --- | --- |
+| GET | `/api/v1/categories` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/categories/active` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/categories/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/categories` | OWNER, MANAGER |
+| PUT | `/api/v1/categories/{id}` | OWNER, MANAGER |
+| PATCH | `/api/v1/categories/{id}/status` | OWNER, MANAGER |
+| GET | `/api/v1/products` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/products/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/products` | OWNER, MANAGER |
+| PUT | `/api/v1/products/{id}` | OWNER, MANAGER |
+| PATCH | `/api/v1/products/{id}/status` | OWNER, MANAGER |
+
+List query params: `q`, `active`, `page` (1-based), `size` (max 100). Products also accept `categoryId`. Tenant id in query/body/path is ignored.
+
+UI routes: `/app/categories`, `/app/products`.
 
 ## Later milestones
 
-1. Catalog: categories and products
-2. Inventory and stock movements
-3. Suppliers and purchases
-4. Customers, POS, GST invoices
-5. Reports, expenses, employees, notifications
-6. VPS deployment with Caddy/Nginx
+1. Inventory and stock movements
+2. Suppliers and purchases
+3. Customers, POS, GST invoices
+4. Reports, expenses, employees, notifications
+5. VPS deployment with Caddy/Nginx

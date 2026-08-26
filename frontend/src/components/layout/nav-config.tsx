@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Receipt,
+  Tags,
   Settings,
   ShoppingBag,
   Store,
@@ -26,7 +27,8 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/app", icon: LayoutDashboard, available: true },
   { label: "Sales", to: "/app/sales", icon: ShoppingBag, available: false },
-  { label: "Products", to: "/app/products", icon: Package, available: false },
+  { label: "Categories", to: "/app/categories", icon: Tags, available: true },
+  { label: "Products", to: "/app/products", icon: Package, available: true },
   { label: "Inventory", to: "/app/inventory", icon: Boxes, available: false },
   { label: "Customers", to: "/app/customers", icon: Users, available: false },
   { label: "Suppliers", to: "/app/suppliers", icon: Truck, available: false },

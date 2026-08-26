@@ -6,10 +6,6 @@ const COPY: Record<string, { title: string; body: string }> = {
     title: "Sales / POS",
     body: "Counter billing, GST tax breakup, and printer-friendly receipts will live here. The shell is ready; the ledger is not mocked.",
   },
-  "/app/products": {
-    title: "Products",
-    body: "SKU, barcode, HSN, and GST rate maintenance is scheduled after inventory design is locked.",
-  },
   "/app/inventory": {
     title: "Inventory",
     body: "Stock on hand, Godown movement, and low-stock alerts need purchases and sales postings first.",
@@ -60,7 +56,7 @@ export function ComingSoonPage() {
           <CardDescription>{copy.body}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Use Dashboard and Company profile for Milestone 1. Those screens talk to live APIs.
+          Categories and Products are live. Remaining modules stay empty until their milestone — no fake CRUD.
         </CardContent>
       </Card>
     </div>

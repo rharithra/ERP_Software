@@ -128,4 +128,97 @@ export const tenantApi = {
     apiRequest<CompanyProfile>("/api/v1/tenant", { method: "PUT", body: JSON.stringify(body) }),
 };
 
+export type Category = {
+  id: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  sku: string;
+  barcode: string | null;
+  description: string | null;
+  categoryId: string;
+  categoryName: string;
+  costPrice: number | string;
+  sellingPrice: number | string;
+  gstRate: number | string;
+  unit: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PageResult<T> = {
+  items: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type CategoryPayload = {
+  name: string;
+  description?: string | null;
+};
+
+export type ProductPayload = {
+  name: string;
+  categoryId: string;
+  description?: string | null;
+  sku: string;
+  barcode?: string | null;
+  costPrice: number;
+  sellingPrice: number;
+  gstRate: number;
+  unit: string;
+};
+
+function queryString(params: Record<string, string | number | boolean | undefined>) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  });
+  const encoded = search.toString();
+  return encoded ? `?${encoded}` : "";
+}
+
+export const categoryApi = {
+  list: (params: { q?: string; active?: boolean; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Category>>(`/api/v1/categories${queryString(params)}`),
+  active: () => apiRequest<Category[]>("/api/v1/categories/active"),
+  create: (body: CategoryPayload) =>
+    apiRequest<Category>("/api/v1/categories", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: CategoryPayload) =>
+    apiRequest<Category>(`/api/v1/categories/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  updateStatus: (id: string, active: boolean) =>
+    apiRequest<Category>(`/api/v1/categories/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ active }),
+    }),
+};
+
+export const productApi = {
+  list: (params: { q?: string; categoryId?: string; active?: boolean; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Product>>(`/api/v1/products${queryString(params)}`),
+  get: (id: string) => apiRequest<Product>(`/api/v1/products/${id}`),
+  create: (body: ProductPayload) =>
+    apiRequest<Product>("/api/v1/products", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: ProductPayload) =>
+    apiRequest<Product>(`/api/v1/products/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  updateStatus: (id: string, active: boolean) =>
+    apiRequest<Product>(`/api/v1/products/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ active }),
+    }),
+};
+
+
 

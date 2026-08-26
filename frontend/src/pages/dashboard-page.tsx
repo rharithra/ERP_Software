@@ -24,8 +24,8 @@ const PLACEHOLDERS = [
   },
   {
     title: "Catalog",
-    value: "—",
-    hint: "Product and category setup is scheduled for a later milestone.",
+    value: "Live",
+    hint: "Categories and products are real master data. Stock quantities wait for inventory.",
     icon: Package,
   },
 ];
@@ -64,12 +64,22 @@ export function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Next setup step</CardTitle>
-          <CardDescription>Complete GST and address details so invoices can pick them up later.</CardDescription>
+          <CardDescription>
+            Add categories, then products with SKU and GST. Complete company GSTIN so invoices can pick it up later.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link className="text-sm font-medium text-primary" to="/app/company">
-            Open company profile
-          </Link>
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+            <Link className="text-sm font-medium text-primary" to="/app/categories">
+              Open categories
+            </Link>
+            <Link className="text-sm font-medium text-primary" to="/app/products">
+              Open products
+            </Link>
+            <Link className="text-sm font-medium text-primary" to="/app/company">
+              Open company profile
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,12 +1,16 @@
 # Development roadmap
 
-## Milestone 1 — Foundation (this repo)
+## Milestone 1 — Foundation — COMPLETE
 
 Authentication, company onboarding, tenant isolation, ERP shell, company profile.
 
-## Milestone 2 — Catalog
+## Milestone 1 Hardening — COMPLETE
 
-Categories and products with HSN, GST rate, SKU, and barcode fields. No fake stock.
+JWT validation, fail-closed tenant binding, FORCE RLS, membership reload, global 401 handling, JWT secret for Docker.
+
+## Milestone 2 — Catalog — COMPLETE
+
+Categories and products with SKU, barcode, GST slab, unit, cost/selling price. Tenant-scoped uniqueness. No stock quantities. No HSN in this slice (GST rate only).
 
 ## Milestone 3 — Inventory
 
