@@ -140,6 +140,9 @@ describe("Products page", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Add product" }));
     await user.type(screen.getByLabelText("Product name"), "A");
+    await user.type(screen.getByLabelText("SKU / product code"), "AMUL-1");
+    await user.type(screen.getByLabelText("Cost price (₹)"), "10");
+    await user.type(screen.getByLabelText("Selling price (₹)"), "12");
     await user.click(screen.getByRole("button", { name: "Create product" }));
 
     expect(await screen.findByText("Product name is required.")).toBeInTheDocument();
