@@ -851,3 +851,29 @@ Products cannot reference another tenant’s category (Hibernate tenant filter +
 ## Out of scope
 
 Stock quantities, warehouses, purchases, POS, invoices, expenses, employees, reports, AI, barcode scanners.
+
+---
+
+# 34. Milestone 3 — Inventory (COMPLETE)
+
+Single-location inventory for the authenticated tenant.
+
+## Models
+
+**Inventory balance** — one row per product per tenant: quantity (`NUMERIC(19,3)`), reorder level, opening-recorded flag, timestamps.
+
+**Stock movement** — append-only ledger: OPENING_STOCK, ADJUSTMENT_IN, ADJUSTMENT_OUT. Stores before/after, reason, notes, actor. History cannot be edited or deleted.
+
+**Status** — derived: IN_STOCK, LOW_STOCK, OUT_OF_STOCK. Negative stock is rejected.
+
+## APIs
+
+`/api/v1/inventory` list, summary, get, movements, opening-stock, adjustments, reorder-level. Reads: OWNER/MANAGER/CASHIER. Mutations: OWNER/MANAGER. Tenant from JWT only. `@TenantBypass` is not used. Concurrent updates lock the balance row.
+
+## UI
+
+`/app/inventory` with live summary cards, search/filters, opening stock, adjustments, reorder level, movement history.
+
+## Out of scope
+
+Purchases, GRN, sales/POS, customers, suppliers, warehouses, batches, serials, barcode scanners.

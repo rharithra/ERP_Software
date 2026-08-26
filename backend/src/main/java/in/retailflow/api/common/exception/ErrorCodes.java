@@ -14,6 +14,8 @@ public final class ErrorCodes {
     public static final String PRODUCT_NOT_FOUND = "PRODUCT_NOT_FOUND";
     public static final String SKU_ALREADY_EXISTS = "SKU_ALREADY_EXISTS";
     public static final String BARCODE_ALREADY_EXISTS = "BARCODE_ALREADY_EXISTS";
+    public static final String OPENING_STOCK_ALREADY_RECORDED = "OPENING_STOCK_ALREADY_RECORDED";
+    public static final String INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}

@@ -10,6 +10,7 @@ import { ComingSoonPage } from "@/pages/coming-soon-page";
 import { CategoriesPage } from "@/pages/categories-page";
 import { CompanyPage } from "@/pages/company-page";
 import { DashboardPage } from "@/pages/dashboard-page";
+import { InventoryPage } from "@/pages/inventory-page";
 import { LandingPage } from "@/pages/landing-page";
 import { LoginPage } from "@/pages/login-page";
 import { ProductsPage } from "@/pages/products-page";
@@ -48,7 +49,7 @@ export default function App() {
                   <Route path="categories" element={<CategoriesPage />} />
                   <Route path="sales" element={<ComingSoonPage />} />
                   <Route path="products" element={<ProductsPage />} />
-                  <Route path="inventory" element={<ComingSoonPage />} />
+                  <Route path="inventory" element={<InventoryPage />} />
                   <Route path="customers" element={<ComingSoonPage />} />
                   <Route path="suppliers" element={<ComingSoonPage />} />
                   <Route path="purchases" element={<ComingSoonPage />} />

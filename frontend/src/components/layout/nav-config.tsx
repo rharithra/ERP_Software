@@ -29,7 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Sales", to: "/app/sales", icon: ShoppingBag, available: false },
   { label: "Categories", to: "/app/categories", icon: Tags, available: true },
   { label: "Products", to: "/app/products", icon: Package, available: true },
-  { label: "Inventory", to: "/app/inventory", icon: Boxes, available: false },
+  { label: "Inventory", to: "/app/inventory", icon: Boxes, available: true },
   { label: "Customers", to: "/app/customers", icon: Users, available: false },
   { label: "Suppliers", to: "/app/suppliers", icon: Truck, available: false },
   { label: "Purchases", to: "/app/purchases", icon: ClipboardList, available: false },

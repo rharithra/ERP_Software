@@ -12,9 +12,9 @@ JWT validation, fail-closed tenant binding, FORCE RLS, membership reload, global
 
 Categories and products with SKU, barcode, GST slab, unit, cost/selling price. Tenant-scoped uniqueness. No stock quantities. No HSN in this slice (GST rate only).
 
-## Milestone 3 — Inventory
+## Milestone 3 — Inventory — COMPLETE
 
-Stock on hand, receipts from purchases, issues from sales, low-stock notifications.
+Single-location stock balances, opening stock, manual adjustments, reorder levels, derived stock status, and an append-only movement ledger. No purchases, sales, or warehouses.
 
 ## Milestone 4 — Purchases
 

@@ -220,5 +220,74 @@ export const productApi = {
     }),
 };
 
+export type InventoryStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+
+export type InventoryItem = {
+  productId: string;
+  productName: string;
+  sku: string;
+  categoryId: string;
+  categoryName: string;
+  unit: string;
+  quantity: number | string;
+  reorderLevel: number | string;
+  status: InventoryStatus;
+  openingRecorded: boolean;
+  updatedAt: string;
+};
+
+export type InventorySummary = {
+  totalProducts: number;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+};
+
+export type StockMovement = {
+  id: string;
+  productId: string;
+  type: "OPENING_STOCK" | "ADJUSTMENT_IN" | "ADJUSTMENT_OUT";
+  quantity: number | string;
+  quantityBefore: number | string;
+  quantityAfter: number | string;
+  referenceType: string | null;
+  referenceId: string | null;
+  reason: string | null;
+  notes: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+};
+
+export type AdjustmentReason = "DAMAGED" | "EXPIRED" | "PHYSICAL_COUNT" | "MISSING" | "OPENING_CORRECTION" | "OTHER";
+
+export const inventoryApi = {
+  list: (params: { q?: string; categoryId?: string; status?: InventoryStatus; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<InventoryItem>>(`/api/v1/inventory${queryString(params)}`),
+  summary: () => apiRequest<InventorySummary>("/api/v1/inventory/summary"),
+  get: (id: string) => apiRequest<InventoryItem>(`/api/v1/inventory/${id}`),
+  movements: (id: string, params: { page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<StockMovement>>(`/api/v1/inventory/${id}/movements${queryString(params)}`),
+  openingStock: (id: string, body: { quantity: number; notes?: string | null }) =>
+    apiRequest<InventoryItem>(`/api/v1/inventory/${id}/opening-stock`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  adjust: (
+    id: string,
+    body: { type: "ADJUSTMENT_IN" | "ADJUSTMENT_OUT"; quantity: number; reason: AdjustmentReason; notes?: string | null },
+  ) =>
+    apiRequest<InventoryItem>(`/api/v1/inventory/${id}/adjustments`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateReorderLevel: (id: string, reorderLevel: number) =>
+    apiRequest<InventoryItem>(`/api/v1/inventory/${id}/reorder-level`, {
+      method: "PATCH",
+      body: JSON.stringify({ reorderLevel }),
+    }),
+};
+
+
 
 

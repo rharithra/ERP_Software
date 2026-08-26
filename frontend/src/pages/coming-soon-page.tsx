@@ -6,10 +6,6 @@ const COPY: Record<string, { title: string; body: string }> = {
     title: "Sales / POS",
     body: "Counter billing, GST tax breakup, and printer-friendly receipts will live here. The shell is ready; the ledger is not mocked.",
   },
-  "/app/inventory": {
-    title: "Inventory",
-    body: "Stock on hand, Godown movement, and low-stock alerts need purchases and sales postings first.",
-  },
   "/app/customers": {
     title: "Customers",
     body: "Credit customers, GSTIN, and outstanding balances will be added with the sales module.",
@@ -56,7 +52,7 @@ export function ComingSoonPage() {
           <CardDescription>{copy.body}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Categories and Products are live. Remaining modules stay empty until their milestone — no fake CRUD.
+          Categories, Products, and Inventory are live. Remaining modules stay empty until their milestone — no fake CRUD.
         </CardContent>
       </Card>
     </div>

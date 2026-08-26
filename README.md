@@ -2,15 +2,16 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, and general stores.
 
-Milestones 1 and 1 Hardening are complete. Milestone 2 adds a tenant-scoped product catalog:
+Milestones 1–3 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
 - ERP shell with dashboard and company profile
 - categories and products (SKU, barcode, prices, GST slab, unit)
-- remaining modules stay coming-soon (inventory, purchases, sales/POS, invoices)
+- inventory balances, opening stock, adjustments, and movement history
+- remaining modules stay coming-soon (purchases, sales/POS, invoices)
 
-Inventory quantities, purchases, sales, and GST invoices are intentionally not implemented yet.
+Purchases, sales, and GST invoices are intentionally not implemented yet.
 
 ## Architecture
 
@@ -110,15 +111,15 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), and catalog CRUD/isolation.
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, and inventory opening/adjustments.
 
 ## Current milestone
 
-**Milestone 2 — Categories + products (catalog)**
+**Milestone 3 — Inventory and stock movements**
 
-Done when a retailer can maintain categories and products inside their own tenant, with tenant-scoped SKU/barcode uniqueness and GST/unit master data. Inventory stock is **not** part of this milestone.
+Done when a retailer can record opening stock, adjust quantities with a ledger, and see in-stock / low-stock / out-of-stock status. Purchases and sales do **not** post yet.
 
-**Milestone 1** and **Milestone 1 Hardening** are complete.
+**Milestone 1**, **Milestone 1 Hardening**, and **Milestone 2** are complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -138,12 +139,25 @@ Done when a retailer can maintain categories and products inside their own tenan
 
 List query params: `q`, `active`, `page` (1-based), `size` (max 100). Products also accept `categoryId`. Tenant id in query/body/path is ignored.
 
-UI routes: `/app/categories`, `/app/products`.
+UI routes: `/app/categories`, `/app/products`, `/app/inventory`.
+
+## Inventory API (authenticated; tenant from JWT)
+
+| Method | Path | Roles |
+| --- | --- | --- |
+| GET | `/api/v1/inventory` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/inventory/summary` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/inventory/{productId}` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/inventory/{productId}/movements` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/inventory/{productId}/opening-stock` | OWNER, MANAGER |
+| POST | `/api/v1/inventory/{productId}/adjustments` | OWNER, MANAGER |
+| PATCH | `/api/v1/inventory/{productId}/reorder-level` | OWNER, MANAGER |
+
+List query params: `q`, `categoryId`, `status` (`IN_STOCK` / `LOW_STOCK` / `OUT_OF_STOCK`), `page`, `size`. Tenant id in query/body/path is ignored.
 
 ## Later milestones
 
-1. Inventory and stock movements
-2. Suppliers and purchases
-3. Customers, POS, GST invoices
-4. Reports, expenses, employees, notifications
-5. VPS deployment with Caddy/Nginx
+1. Suppliers and purchases
+2. Customers, POS, GST invoices
+3. Reports, expenses, employees, notifications
+4. VPS deployment with Caddy/Nginx

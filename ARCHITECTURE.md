@@ -41,7 +41,7 @@ The API never trusts a tenant id from the request body. After signature verifica
 Defense in depth:
 
 1. **Application** — `TenantContext` ThreadLocal from the JWT membership (never from query/body/path). Hibernate filter `tenantFilter` restricts tenant-owned rows.
-2. **Database** — `FORCE ROW LEVEL SECURITY` on `tenants`, `tenant_memberships`, `categories`, and `products`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
+2. **Database** — `FORCE ROW LEVEL SECURITY` on `tenants`, `tenant_memberships`, `categories`, `products`, `inventory_balances`, and `stock_movements`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
 
 Tenant binding is **always on** for each new Spring transaction:
 
@@ -62,6 +62,8 @@ Method security:
 - `PUT /api/v1/tenant` — OWNER, MANAGER
 - Catalog reads (`GET /api/v1/categories`, `GET /api/v1/products`, …) — OWNER, MANAGER, CASHIER
 - Catalog writes — OWNER, MANAGER
+- Inventory reads — OWNER, MANAGER, CASHIER
+- Inventory opening stock, adjustments, reorder level — OWNER, MANAGER
 
 MANAGER is not creatable through signup or the UI in Milestone 1. Automated tests insert a MANAGER membership with SQL. There is no invitation flow.
 
@@ -83,7 +85,7 @@ Error:
 
 ## Frontend
 
-The SPA stores the access token in `localStorage` (same-origin, no refresh cookie yet). Protected routes load `/api/v1/auth/me`. A 401 on any authenticated API call clears the token and sends the browser to `/login`. Login and signup 401 responses do not redirect, so the forms can show errors. Categories and products are live under `/app/categories` and `/app/products`. Later modules still render a coming-soon page instead of fake CRUD.
+The SPA stores the access token in `localStorage` (same-origin, no refresh cookie yet). Protected routes load `/api/v1/auth/me`. A 401 on any authenticated API call clears the token and sends the browser to `/login`. Login and signup 401 responses do not redirect, so the forms can show errors. Categories, products, and inventory are live. Later modules still render a coming-soon page instead of fake CRUD.
 
 Theme uses CSS variables and `next-themes` (`class` on `html`) for light and dark mode.
 
@@ -115,6 +117,34 @@ Two tenants may reuse the same SKU or barcode.
 
 `PageResponse`: 1-based `page`, `size` (default 20, max 100), `items`, `totalItems`, `totalPages`. Search is SQL `LIKE` on name (categories) and name/SKU/barcode (products).
 
-## What this repo will not do in M2
+## Inventory (Milestone 3)
 
-Inventory quantities, warehouses, purchases, suppliers, customers, POS, invoices, expenses, employees, reports, billing, S3, AI, and hardware stay out of the schema and UI until later milestones.
+Single-location stock per tenant. No warehouses. Tenant id is never taken from the client. Inventory services do **not** use `@TenantBypass`.
+
+### Balance
+
+One `inventory_balances` row per product (`UNIQUE (tenant_id, product_id)`). `quantity` and `reorderLevel` are `NUMERIC(19,3)` / `BigDecimal` (never float). Quantity is in the product's unit. Composite FK `(product_id, tenant_id)` prevents cross-tenant products.
+
+### Status (derived, not stored)
+
+- `OUT_OF_STOCK` — quantity = 0
+- `LOW_STOCK` — quantity > 0 and quantity ≤ reorder level
+- `IN_STOCK` — quantity > reorder level
+
+### Movements (append-only)
+
+`OPENING_STOCK`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`. Each row stores quantity (always positive), before/after, optional reason/notes, `createdBy`, timestamp. `reference_type` / `reference_id` are reserved for future purchase receipts and sales. Users cannot edit or delete history; a later adjustment corrects mistakes.
+
+Opening stock is allowed once. Further corrections use adjustments. Adjustment out that would go negative is rejected with `INSUFFICIENT_STOCK`.
+
+### Concurrency
+
+Balance updates take a PostgreSQL row lock (`SELECT FOR UPDATE` / JPA `PESSIMISTIC_WRITE`) inside a transaction so concurrent adjustments cannot lose updates.
+
+### Future postings
+
+Purchases will insert `PURCHASE_RECEIPT` (or similar) movements and increase quantity. POS will insert `SALE` movements and decrease quantity. Those types are not implemented in M3.
+
+## What this repo will not do in M3
+
+Warehouses, multi-location, purchases, suppliers, customers, POS, invoices, batches, serials, expiry, AI, and hardware stay out of the schema and UI until later milestones.
