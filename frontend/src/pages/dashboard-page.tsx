@@ -77,10 +77,13 @@ export function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Next setup step</CardTitle>
-          <CardDescription>Record opening stock so the shop floor matches RetailFlow.</CardDescription>
+          <CardDescription>Record a purchase receipt or opening stock so the shop floor matches RetailFlow.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+            <Link className="text-sm font-medium text-primary" to="/app/purchases">
+              Open purchases
+            </Link>
             <Link className="text-sm font-medium text-primary" to="/app/inventory">
               Open inventory
             </Link>

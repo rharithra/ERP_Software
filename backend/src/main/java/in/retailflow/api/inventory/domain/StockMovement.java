@@ -77,6 +77,22 @@ public class StockMovement {
             AdjustmentReason reason,
             String notes,
             UUID createdBy) {
+        this(id, tenant, product, movementType, quantity, quantityBefore, quantityAfter, reason, notes, createdBy, null, null);
+    }
+
+    public StockMovement(
+            UUID id,
+            Tenant tenant,
+            Product product,
+            StockMovementType movementType,
+            BigDecimal quantity,
+            BigDecimal quantityBefore,
+            BigDecimal quantityAfter,
+            AdjustmentReason reason,
+            String notes,
+            UUID createdBy,
+            String referenceType,
+            UUID referenceId) {
         this.id = id;
         this.tenant = tenant;
         this.product = product;
@@ -87,6 +103,8 @@ public class StockMovement {
         this.reason = reason;
         this.notes = notes;
         this.createdBy = createdBy;
+        this.referenceType = referenceType;
+        this.referenceId = referenceId;
         this.createdAt = Instant.now();
     }
 

@@ -14,7 +14,11 @@ import { InventoryPage } from "@/pages/inventory-page";
 import { LandingPage } from "@/pages/landing-page";
 import { LoginPage } from "@/pages/login-page";
 import { ProductsPage } from "@/pages/products-page";
+import { PurchaseDetailPage } from "@/pages/purchase-detail-page";
+import { PurchaseFormPage } from "@/pages/purchase-form-page";
+import { PurchasesPage } from "@/pages/purchases-page";
 import { SignupPage } from "@/pages/signup-page";
+import { SuppliersPage } from "@/pages/suppliers-page";
 
 const queryClient = new QueryClient();
 
@@ -51,8 +55,11 @@ export default function App() {
                   <Route path="products" element={<ProductsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
                   <Route path="customers" element={<ComingSoonPage />} />
-                  <Route path="suppliers" element={<ComingSoonPage />} />
-                  <Route path="purchases" element={<ComingSoonPage />} />
+                  <Route path="suppliers" element={<SuppliersPage />} />
+                  <Route path="purchases" element={<PurchasesPage />} />
+                  <Route path="purchases/new" element={<PurchaseFormPage />} />
+                  <Route path="purchases/:id" element={<PurchaseDetailPage />} />
+                  <Route path="purchases/:id/edit" element={<PurchaseFormPage />} />
                   <Route path="reports" element={<ComingSoonPage />} />
                   <Route path="expenses" element={<ComingSoonPage />} />
                   <Route path="employees" element={<ComingSoonPage />} />

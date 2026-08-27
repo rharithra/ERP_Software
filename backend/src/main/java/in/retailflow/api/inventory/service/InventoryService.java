@@ -111,7 +111,17 @@ public class InventoryService {
                     "This product already has stock. Use a stock adjustment instead.",
                     HttpStatus.CONFLICT.value());
         }
-        apply(balance, product, StockMovementType.OPENING_STOCK, quantity, before, quantity, null, blankToNull(request.notes()));
+        apply(
+                balance,
+                product,
+                StockMovementType.OPENING_STOCK,
+                quantity,
+                before,
+                quantity,
+                null,
+                blankToNull(request.notes()),
+                null,
+                null);
         balance.setOpeningRecorded(true);
         return toItem(product, balance);
     }
@@ -140,7 +150,48 @@ public class InventoryService {
                         HttpStatus.CONFLICT.value());
             }
         }
-        apply(balance, product, request.type(), change, before, after, request.reason(), blankToNull(request.notes()));
+        apply(
+                balance,
+                product,
+                request.type(),
+                change,
+                before,
+                after,
+                request.reason(),
+                blankToNull(request.notes()),
+                null,
+                null);
+        return toItem(product, balance);
+    }
+
+    /**
+     * Increases stock for a received purchase. Must run inside the purchase receive
+     * transaction so a failed line rolls back every line.
+     */
+    @Transactional
+    public InventoryItemResponse applyPurchaseReceipt(UUID productId, BigDecimal quantity, UUID purchaseId) {
+        Product product = requireProduct(productId);
+        InventoryBalance balance = lockOrCreate(product);
+        BigDecimal change = scale(quantity);
+        if (change.compareTo(ZERO) <= 0) {
+            throw new RetailflowException(
+                    ErrorCodes.VALIDATION_ERROR,
+                    "Purchase receipt quantity must be greater than zero",
+                    HttpStatus.BAD_REQUEST.value());
+        }
+        BigDecimal before = scale(balance.getQuantity());
+        BigDecimal after = before.add(change);
+        apply(
+                balance,
+                product,
+                StockMovementType.PURCHASE_RECEIPT,
+                change,
+                before,
+                after,
+                null,
+                "Purchase received",
+                "PURCHASE",
+                purchaseId);
         return toItem(product, balance);
     }
 
@@ -172,7 +223,9 @@ public class InventoryService {
             BigDecimal before,
             BigDecimal after,
             AdjustmentReason reason,
-            String notes) {
+            String notes,
+            String referenceType,
+            UUID referenceId) {
         balance.setQuantity(after);
         movementRepository.save(new StockMovement(
                 UUID.randomUUID(),
@@ -184,7 +237,9 @@ public class InventoryService {
                 after,
                 reason,
                 notes,
-                TenantContext.require().userId()));
+                TenantContext.require().userId(),
+                referenceType,
+                referenceId));
     }
 
     private InventoryBalance lockOrCreate(Product product) {

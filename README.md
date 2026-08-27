@@ -2,16 +2,17 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, and general stores.
 
-Milestones 1–3 are complete:
+Milestones 1–4 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
 - ERP shell with dashboard and company profile
 - categories and products (SKU, barcode, prices, GST slab, unit)
 - inventory balances, opening stock, adjustments, and movement history
-- remaining modules stay coming-soon (purchases, sales/POS, invoices)
+- suppliers, draft purchases, goods receiving, and PURCHASE_RECEIPT stock movements
+- remaining modules stay coming-soon (sales/POS, customers, invoices)
 
-Purchases, sales, and GST invoices are intentionally not implemented yet.
+Sales, POS, customers, and GST invoices are intentionally not implemented yet.
 
 ## Architecture
 
@@ -111,15 +112,15 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, and inventory opening/adjustments.
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, inventory opening/adjustments, suppliers, and purchase receiving.
 
 ## Current milestone
 
-**Milestone 3 — Inventory and stock movements**
+**Milestone 4 — Suppliers, purchases, and goods receiving**
 
-Done when a retailer can record opening stock, adjust quantities with a ledger, and see in-stock / low-stock / out-of-stock status. Purchases and sales do **not** post yet.
+Done when a retailer can record a supplier, save a DRAFT purchase, receive it, and see inventory increase through the existing Inventory module (`PURCHASE_RECEIPT`). Creating a draft does **not** add stock.
 
-**Milestone 1**, **Milestone 1 Hardening**, and **Milestone 2** are complete.
+**Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, and **Milestone 3** are complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -139,7 +140,7 @@ Done when a retailer can record opening stock, adjust quantities with a ledger, 
 
 List query params: `q`, `active`, `page` (1-based), `size` (max 100). Products also accept `categoryId`. Tenant id in query/body/path is ignored.
 
-UI routes: `/app/categories`, `/app/products`, `/app/inventory`.
+UI routes: `/app/categories`, `/app/products`, `/app/inventory`, `/app/suppliers`, `/app/purchases`.
 
 ## Inventory API (authenticated; tenant from JWT)
 
@@ -155,9 +156,30 @@ UI routes: `/app/categories`, `/app/products`, `/app/inventory`.
 
 List query params: `q`, `categoryId`, `status` (`IN_STOCK` / `LOW_STOCK` / `OUT_OF_STOCK`), `page`, `size`. Tenant id in query/body/path is ignored.
 
+## Supplier and purchase API (authenticated; tenant from JWT)
+
+| Method | Path | Roles |
+| --- | --- | --- |
+| GET | `/api/v1/suppliers` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/suppliers/summary` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/suppliers/active` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/suppliers/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/suppliers` | OWNER, MANAGER |
+| PUT | `/api/v1/suppliers/{id}` | OWNER, MANAGER |
+| PATCH | `/api/v1/suppliers/{id}/status` | OWNER, MANAGER |
+| GET | `/api/v1/purchases` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/purchases/summary` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/purchases/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/purchases` | OWNER, MANAGER |
+| PUT | `/api/v1/purchases/{id}` | OWNER, MANAGER |
+| POST | `/api/v1/purchases/{id}/receive` | OWNER, MANAGER |
+| POST | `/api/v1/purchases/{id}/cancel` | OWNER, MANAGER |
+
+Purchase list query params: `q` (purchase number), `supplierId`, `status` (`DRAFT` / `RECEIVED` / `CANCELLED`), `fromDate`, `toDate`, `page`, `size`. Totals are always recalculated on the server. Receiving is atomic and posts through `InventoryService`.
+
 ## Later milestones
 
-1. Suppliers and purchases
-2. Customers, POS, GST invoices
+1. Customers, POS, GST invoices
+2. Purchase returns and supplier payments
 3. Reports, expenses, employees, notifications
 4. VPS deployment with Caddy/Nginx

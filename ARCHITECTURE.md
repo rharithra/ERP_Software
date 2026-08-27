@@ -41,7 +41,7 @@ The API never trusts a tenant id from the request body. After signature verifica
 Defense in depth:
 
 1. **Application** — `TenantContext` ThreadLocal from the JWT membership (never from query/body/path). Hibernate filter `tenantFilter` restricts tenant-owned rows.
-2. **Database** — `FORCE ROW LEVEL SECURITY` on `tenants`, `tenant_memberships`, `categories`, `products`, `inventory_balances`, and `stock_movements`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
+2. **Database** — `FORCE ROW LEVEL SECURITY` on `tenants`, `tenant_memberships`, `categories`, `products`, `inventory_balances`, `stock_movements`, `suppliers`, `purchase_number_counters`, `purchases`, and `purchase_items`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
 
 Tenant binding is **always on** for each new Spring transaction:
 
@@ -85,7 +85,7 @@ Error:
 
 ## Frontend
 
-The SPA stores the access token in `localStorage` (same-origin, no refresh cookie yet). Protected routes load `/api/v1/auth/me`. A 401 on any authenticated API call clears the token and sends the browser to `/login`. Login and signup 401 responses do not redirect, so the forms can show errors. Categories, products, and inventory are live. Later modules still render a coming-soon page instead of fake CRUD.
+The SPA stores the access token in `localStorage` (same-origin, no refresh cookie yet). Protected routes load `/api/v1/auth/me`. A 401 on any authenticated API call clears the token and sends the browser to `/login`. Login and signup 401 responses do not redirect, so the forms can show errors. Categories, products, inventory, suppliers, and purchases are live. Later modules still render a coming-soon page instead of fake CRUD.
 
 Theme uses CSS variables and `next-themes` (`class` on `html`) for light and dark mode.
 
@@ -133,7 +133,7 @@ One `inventory_balances` row per product (`UNIQUE (tenant_id, product_id)`). `qu
 
 ### Movements (append-only)
 
-`OPENING_STOCK`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`. Each row stores quantity (always positive), before/after, optional reason/notes, `createdBy`, timestamp. `reference_type` / `reference_id` are reserved for future purchase receipts and sales. Users cannot edit or delete history; a later adjustment corrects mistakes.
+`OPENING_STOCK`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`, `PURCHASE_RECEIPT`. Each row stores quantity (always positive), before/after, optional reason/notes, `createdBy`, timestamp, and optional `reference_type` / `reference_id`. Users cannot edit or delete history; a later adjustment corrects mistakes.
 
 Opening stock is allowed once. Further corrections use adjustments. Adjustment out that would go negative is rejected with `INSUFFICIENT_STOCK`.
 
@@ -143,8 +143,39 @@ Balance updates take a PostgreSQL row lock (`SELECT FOR UPDATE` / JPA `PESSIMIST
 
 ### Future postings
 
-Purchases will insert `PURCHASE_RECEIPT` (or similar) movements and increase quantity. POS will insert `SALE` movements and decrease quantity. Those types are not implemented in M3.
+POS will insert `SALE` movements and decrease quantity. That type is not implemented in M4.
 
-## What this repo will not do in M3
+## Purchases (Milestone 4)
 
-Warehouses, multi-location, purchases, suppliers, customers, POS, invoices, batches, serials, expiry, AI, and hardware stay out of the schema and UI until later milestones.
+Tenant-scoped procurement. Inventory remains the only current-stock store (`InventoryBalance.quantity`). Purchases never duplicate stock on product, supplier, or purchase rows.
+
+```
+Supplier → Purchase (DRAFT) → Receive → InventoryService.applyPurchaseReceipt
+                                         → InventoryBalance + StockMovement PURCHASE_RECEIPT
+```
+
+### Supplier
+
+`suppliers`: name unique per tenant (case-insensitive). Optional contact, phone, email, address, GSTIN, notes. Deactivate instead of delete. OWNER/MANAGER mutate; CASHIER may list/view.
+
+### Purchase
+
+Human number `PUR-000001` from a per-tenant counter (`SELECT FOR UPDATE`). Status: `DRAFT` → `RECEIVED` or `DRAFT` → `CANCELLED`. Received purchases cannot return to draft, cannot be edited, and cannot be cancelled. No partial receiving.
+
+Items snapshot product name, SKU, unit, unit cost, and GST at save time. Line math (HALF_UP, scale 2):
+
+- `lineSubtotal = quantity × unitCost`
+- `lineTax = lineSubtotal × gstRate / 100`
+- `lineTotal = lineSubtotal + lineTax`
+
+Purchase totals are sums of lines. The API ignores client-supplied totals.
+
+### Receiving
+
+`PurchaseService.receive` is one transaction: lock the purchase row, verify DRAFT and non-empty items, lock each inventory balance via the existing inventory service, increase quantity, write `PURCHASE_RECEIPT` with `referenceType=PURCHASE` and `referenceId=purchaseId`, then set `RECEIVED` + `receivedAt`. A second receive returns 409 and does not add stock again.
+
+CASHIER cannot create, edit, receive, or cancel.
+
+## What this repo will not do in M4
+
+Warehouses, multi-location, purchase returns, supplier payments, customers, POS, invoices, batches, serials, expiry, AI, and hardware stay out of the schema and UI until later milestones.

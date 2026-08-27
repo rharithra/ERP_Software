@@ -862,7 +862,7 @@ Single-location inventory for the authenticated tenant.
 
 **Inventory balance** — one row per product per tenant: quantity (`NUMERIC(19,3)`), reorder level, opening-recorded flag, timestamps.
 
-**Stock movement** — append-only ledger: OPENING_STOCK, ADJUSTMENT_IN, ADJUSTMENT_OUT. Stores before/after, reason, notes, actor. History cannot be edited or deleted.
+**Stock movement** — append-only ledger: OPENING_STOCK, ADJUSTMENT_IN, ADJUSTMENT_OUT, PURCHASE_RECEIPT. Stores before/after, reason, notes, actor, optional purchase reference. History cannot be edited or deleted.
 
 **Status** — derived: IN_STOCK, LOW_STOCK, OUT_OF_STOCK. Negative stock is rejected.
 
@@ -876,4 +876,34 @@ Single-location inventory for the authenticated tenant.
 
 ## Out of scope
 
-Purchases, GRN, sales/POS, customers, suppliers, warehouses, batches, serials, barcode scanners.
+GRN in M3, sales/POS, customers, warehouses, batches, serials, barcode scanners.
+
+---
+
+# 35. Milestone 4 — Suppliers and purchases (COMPLETE)
+
+Procurement for the authenticated tenant. Inventory stays the single source of truth for quantity.
+
+## Models
+
+**Supplier** — tenant-owned vendor master. Name required and unique per tenant. Optional contact, phone, email, address, GSTIN, notes. Active flag; no hard delete in this slice.
+
+**Purchase** — `PUR-000001` style number, supplier, date, DRAFT / RECEIVED / CANCELLED, server-calculated subtotal / tax / total (`NUMERIC` / `BigDecimal`), notes, receivedAt, createdBy.
+
+**Purchase item** — product (same tenant), snapshotted name/SKU/unit, quantity (`NUMERIC(19,3)`), unit cost, GST slab (0/5/12/18/28), line totals.
+
+## Lifecycle
+
+DRAFT does not change stock and can be edited or cancelled. RECEIVED is full receiving only: `PurchaseService` → `InventoryService.applyPurchaseReceipt` → balance lock → `PURCHASE_RECEIPT` movement (`referenceType=PURCHASE`). Double receive is rejected. Received purchases cannot be edited or cancelled. Purchase returns are out of scope.
+
+## APIs
+
+`/api/v1/suppliers` CRUD + status + summary. `/api/v1/purchases` list/summary/get/create/update/receive/cancel. Reads: OWNER/MANAGER/CASHIER. Mutations: OWNER/MANAGER. Tenant from JWT only.
+
+## UI
+
+`/app/suppliers`, `/app/purchases`, `/app/purchases/new`, `/app/purchases/:id`, `/app/purchases/:id/edit`. Receive confirmation dialog. Cashiers can view, not mutate.
+
+## Out of scope
+
+Sales, POS, customers, invoices, purchase returns, supplier payments, warehouses, FIFO/weighted average costing, CGST/SGST split, e-invoicing.

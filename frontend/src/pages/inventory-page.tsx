@@ -52,6 +52,7 @@ function statusClass(status: InventoryStatus) {
 function movementLabel(type: StockMovement["type"]) {
   if (type === "OPENING_STOCK") return "Opening stock";
   if (type === "ADJUSTMENT_IN") return "Stock in";
+  if (type === "PURCHASE_RECEIPT") return "Purchase receipt";
   return "Stock out";
 }
 
@@ -240,8 +241,8 @@ export function InventoryPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Single-location stock for this shop. Purchases and POS will post here later — this page is the live balance
-          and movement ledger.
+          Single-location stock for this shop. Receiving a purchase posts PURCHASE_RECEIPT here. POS sales are still
+          later.
         </p>
       </div>
 

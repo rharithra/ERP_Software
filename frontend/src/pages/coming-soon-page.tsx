@@ -10,14 +10,6 @@ const COPY: Record<string, { title: string; body: string }> = {
     title: "Customers",
     body: "Credit customers, GSTIN, and outstanding balances will be added with the sales module.",
   },
-  "/app/suppliers": {
-    title: "Suppliers",
-    body: "Vendor master data is reserved for the purchases milestone.",
-  },
-  "/app/purchases": {
-    title: "Purchases",
-    body: "GRN, purchase invoices, and landing cost will post into inventory in a later release.",
-  },
   "/app/reports": {
     title: "Reports",
     body: "GST summaries and P&L need real transactional data. This page stays empty until then.",
@@ -52,7 +44,8 @@ export function ComingSoonPage() {
           <CardDescription>{copy.body}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Categories, Products, and Inventory are live. Remaining modules stay empty until their milestone — no fake CRUD.
+          Categories, Products, Inventory, Suppliers, and Purchases are live. Remaining modules stay empty until their
+          milestone — no fake CRUD.
         </CardContent>
       </Card>
     </div>

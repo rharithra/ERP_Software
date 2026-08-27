@@ -243,10 +243,12 @@ export type InventorySummary = {
   outOfStock: number;
 };
 
+export type StockMovementType = "OPENING_STOCK" | "ADJUSTMENT_IN" | "ADJUSTMENT_OUT" | "PURCHASE_RECEIPT";
+
 export type StockMovement = {
   id: string;
   productId: string;
-  type: "OPENING_STOCK" | "ADJUSTMENT_IN" | "ADJUSTMENT_OUT";
+  type: StockMovementType;
   quantity: number | string;
   quantityBefore: number | string;
   quantityAfter: number | string;
@@ -286,6 +288,132 @@ export const inventoryApi = {
       method: "PATCH",
       body: JSON.stringify({ reorderLevel }),
     }),
+};
+
+export type Supplier = {
+  id: string;
+  name: string;
+  contactPerson: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  gstin: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SupplierSummary = {
+  totalSuppliers: number;
+  activeSuppliers: number;
+  inactiveSuppliers: number;
+};
+
+export type SupplierPayload = {
+  name: string;
+  contactPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  gstin?: string | null;
+  notes?: string | null;
+};
+
+export const supplierApi = {
+  list: (params: { q?: string; active?: boolean; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Supplier>>(`/api/v1/suppliers${queryString(params)}`),
+  summary: () => apiRequest<SupplierSummary>("/api/v1/suppliers/summary"),
+  active: () => apiRequest<Supplier[]>("/api/v1/suppliers/active"),
+  get: (id: string) => apiRequest<Supplier>(`/api/v1/suppliers/${id}`),
+  create: (body: SupplierPayload) =>
+    apiRequest<Supplier>("/api/v1/suppliers", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: SupplierPayload) =>
+    apiRequest<Supplier>(`/api/v1/suppliers/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  updateStatus: (id: string, active: boolean) =>
+    apiRequest<Supplier>(`/api/v1/suppliers/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ active }),
+    }),
+};
+
+export type PurchaseStatus = "DRAFT" | "RECEIVED" | "CANCELLED";
+
+export type PurchaseItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  unit: string;
+  quantity: number | string;
+  unitCost: number | string;
+  gstRate: number | string;
+  lineSubtotal: number | string;
+  taxAmount: number | string;
+  lineTotal: number | string;
+};
+
+export type Purchase = {
+  id: string;
+  purchaseNumber: string;
+  supplierId: string;
+  supplierName: string;
+  purchaseDate: string;
+  status: PurchaseStatus;
+  subtotal: number | string;
+  taxAmount: number | string;
+  totalAmount: number | string;
+  notes: string | null;
+  receivedAt: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  itemCount: number;
+  items: PurchaseItem[];
+};
+
+export type PurchaseSummary = {
+  totalPurchases: number;
+  draftPurchases: number;
+  receivedPurchases: number;
+  receivedValue: number | string;
+};
+
+export type PurchaseItemPayload = {
+  productId: string;
+  quantity: number;
+  unitCost: number;
+  gstRate: number;
+};
+
+export type PurchasePayload = {
+  supplierId: string;
+  purchaseDate: string;
+  notes?: string | null;
+  items: PurchaseItemPayload[];
+};
+
+export const purchaseApi = {
+  list: (
+    params: {
+      q?: string;
+      supplierId?: string;
+      status?: PurchaseStatus;
+      fromDate?: string;
+      toDate?: string;
+      page?: number;
+      size?: number;
+    } = {},
+  ) => apiRequest<PageResult<Purchase>>(`/api/v1/purchases${queryString(params)}`),
+  summary: () => apiRequest<PurchaseSummary>("/api/v1/purchases/summary"),
+  get: (id: string) => apiRequest<Purchase>(`/api/v1/purchases/${id}`),
+  create: (body: PurchasePayload) =>
+    apiRequest<Purchase>("/api/v1/purchases", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: PurchasePayload) =>
+    apiRequest<Purchase>(`/api/v1/purchases/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  receive: (id: string) => apiRequest<Purchase>(`/api/v1/purchases/${id}/receive`, { method: "POST", body: "{}" }),
+  cancel: (id: string) => apiRequest<Purchase>(`/api/v1/purchases/${id}/cancel`, { method: "POST", body: "{}" }),
 };
 
 

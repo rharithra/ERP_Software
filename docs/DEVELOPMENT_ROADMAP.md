@@ -16,9 +16,9 @@ Categories and products with SKU, barcode, GST slab, unit, cost/selling price. T
 
 Single-location stock balances, opening stock, manual adjustments, reorder levels, derived stock status, and an append-only movement ledger. No purchases, sales, or warehouses.
 
-## Milestone 4 — Purchases
+## Milestone 4 — Purchases — COMPLETE
 
-Suppliers, purchase orders, GRN, purchase invoices in INR.
+Suppliers, purchase drafts, goods receiving, and inventory integration. Purchase returns and supplier payments are later.
 
 ## Milestone 5 — Sales and GST
 

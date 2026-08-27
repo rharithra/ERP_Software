@@ -16,6 +16,13 @@ public final class ErrorCodes {
     public static final String BARCODE_ALREADY_EXISTS = "BARCODE_ALREADY_EXISTS";
     public static final String OPENING_STOCK_ALREADY_RECORDED = "OPENING_STOCK_ALREADY_RECORDED";
     public static final String INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK";
+    public static final String SUPPLIER_NOT_FOUND = "SUPPLIER_NOT_FOUND";
+    public static final String SUPPLIER_NAME_TAKEN = "SUPPLIER_NAME_TAKEN";
+    public static final String SUPPLIER_INACTIVE = "SUPPLIER_INACTIVE";
+    public static final String PURCHASE_NOT_FOUND = "PURCHASE_NOT_FOUND";
+    public static final String PURCHASE_NOT_DRAFT = "PURCHASE_NOT_DRAFT";
+    public static final String PURCHASE_EMPTY = "PURCHASE_EMPTY";
+    public static final String PRODUCT_INACTIVE = "PRODUCT_INACTIVE";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}
