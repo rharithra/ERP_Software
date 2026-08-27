@@ -167,7 +167,7 @@ export function PurchaseDetailPage() {
           <CardDescription>Quantities, costs, and GST are snapshotted at save time.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="hidden md:block">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -198,17 +198,6 @@ export function PurchaseDetailPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-          <div className="space-y-3 md:hidden">
-            {purchase.items.map((item) => (
-              <div key={item.id} className="rounded-lg border p-4 text-sm">
-                <p className="font-medium">{item.productName}</p>
-                <p className="text-muted-foreground">
-                  {item.quantity} {item.unit} × {inr(item.unitCost)} · GST {Number(item.gstRate)}%
-                </p>
-                <p className="mt-1 font-medium">{inr(item.lineTotal)}</p>
-              </div>
-            ))}
           </div>
           <div className="mt-6 space-y-1 text-sm sm:text-right">
             <p>Subtotal: {inr(purchase.subtotal)}</p>

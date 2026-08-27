@@ -247,7 +247,7 @@ export function SuppliersPage() {
                         <TableCell>{supplier.phone ?? "—"}</TableCell>
                         <TableCell className="font-mono text-xs">{supplier.gstin ?? "—"}</TableCell>
                         <TableCell>
-                          <Badge variant={supplier.active ? "secondary" : "outline"}>
+                          <Badge className={supplier.active ? "border-primary/30 bg-primary/10 text-primary" : ""}>
                             {supplier.active ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
@@ -280,7 +280,7 @@ export function SuppliersPage() {
                         <p className="text-sm text-muted-foreground">{supplier.contactPerson ?? "No contact"}</p>
                         <p className="text-sm text-muted-foreground">{supplier.phone ?? "No phone"}</p>
                       </div>
-                      <Badge variant={supplier.active ? "secondary" : "outline"}>
+                      <Badge className={supplier.active ? "border-primary/30 bg-primary/10 text-primary" : ""}>
                         {supplier.active ? "Active" : "Inactive"}
                       </Badge>
                     </div>

@@ -27,6 +27,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -231,8 +232,20 @@ class PurchaseApiIT {
         injected.put("tenantId", ownerB.tenantId());
         injected.put("items", List.of(item(productA, "1", "10", "5")));
         JsonNode created = mapper.readTree(post(ownerA.token(), "/api/v1/purchases", injected).getBody()).path("data");
-        UUID storedTenant = jdbcTemplate.queryForObject(
-                "SELECT tenant_id FROM purchases WHERE id = ?", UUID.class, UUID.fromString(created.path("id").asText()));
+        assertThat(created.path("id").asText()).isNotBlank();
+        UUID storedTenant = jdbcTemplate.execute((ConnectionCallback<UUID>) connection -> {
+            connection.setAutoCommit(false);
+            try (var statement = connection.createStatement()) {
+                statement.execute("SELECT set_config('app.bypass_rls', 'on', true)");
+                try (var rs = statement.executeQuery(
+                        "SELECT tenant_id FROM purchases WHERE id = '" + created.path("id").asText() + "'")) {
+                    rs.next();
+                    UUID tenantId = rs.getObject(1, UUID.class);
+                    connection.rollback();
+                    return tenantId;
+                }
+            }
+        });
         assertThat(storedTenant).isEqualTo(UUID.fromString(ownerA.tenantId()));
 
         String cashier = cashierToken(ownerA);
@@ -263,7 +276,7 @@ class PurchaseApiIT {
             try (var statement = connection.createStatement()) {
                 statement.execute("SELECT set_config('app.bypass_rls', 'off', true)");
                 statement.execute("SELECT set_config('app.current_tenant_id', '" + ownerA.tenantId() + "', true)");
-                var rs = statement.executeQuery("SELECT purchase_number FROM purchases");
+                var rs = statement.executeQuery("SELECT id::text FROM purchases");
                 java.util.ArrayList<String> found = new java.util.ArrayList<>();
                 while (rs.next()) {
                     found.add(rs.getString(1));
@@ -272,8 +285,8 @@ class PurchaseApiIT {
                 return found;
             }
         });
-        assertThat(visible).contains(created.path("purchaseNumber").asText());
-        assertThat(visible).doesNotContain(purchaseB.path("purchaseNumber").asText());
+        assertThat(visible).contains(created.path("id").asText());
+        assertThat(visible).doesNotContain(purchaseBId);
     }
 
     @Test
@@ -317,8 +330,8 @@ class PurchaseApiIT {
             return response;
         });
         start.countDown();
-        HttpStatus statusA = first.get(20, TimeUnit.SECONDS).getStatusCode();
-        HttpStatus statusB = second.get(20, TimeUnit.SECONDS).getStatusCode();
+        HttpStatusCode statusA = first.get(20, TimeUnit.SECONDS).getStatusCode();
+        HttpStatusCode statusB = second.get(20, TimeUnit.SECONDS).getStatusCode();
         pool.shutdownNow();
         assertThat(List.of(statusA, statusB)).contains(HttpStatus.OK);
         assertThat(successes.get()).isEqualTo(1);

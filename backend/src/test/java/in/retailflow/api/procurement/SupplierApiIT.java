@@ -107,7 +107,7 @@ class SupplierApiIT {
         ResponseEntity<String> created = post(a.token(), "/api/v1/suppliers", injected);
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         String id = mapper.readTree(created.getBody()).path("data").path("id").asText();
-        UUID storedTenant = jdbcTemplate.queryForObject("SELECT tenant_id FROM suppliers WHERE id = ?", UUID.class, UUID.fromString(id));
+        UUID storedTenant = tenantOf("suppliers", id);
         assertThat(storedTenant).isEqualTo(UUID.fromString(a.tenantId()));
 
         List<String> visible = jdbcTemplate.execute((ConnectionCallback<List<String>>) connection -> {
@@ -140,6 +140,21 @@ class SupplierApiIT {
         String managerToken = managerToken(owner);
         assertThat(post(managerToken, "/api/v1/suppliers", Map.of("name", "Manager Vendor")).getStatusCode())
                 .isEqualTo(HttpStatus.CREATED);
+    }
+
+    private UUID tenantOf(String table, String id) {
+        return jdbcTemplate.execute((ConnectionCallback<UUID>) connection -> {
+            connection.setAutoCommit(false);
+            try (var statement = connection.createStatement()) {
+                statement.execute("SELECT set_config('app.bypass_rls', 'on', true)");
+                try (var rs = statement.executeQuery("SELECT tenant_id FROM " + table + " WHERE id = '" + id + "'")) {
+                    rs.next();
+                    UUID tenantId = rs.getObject(1, UUID.class);
+                    connection.rollback();
+                    return tenantId;
+                }
+            }
+        });
     }
 
     private String cashierToken(SignupResult owner) {

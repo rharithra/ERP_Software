@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -212,7 +212,7 @@ describe("Purchases page", () => {
     });
     vi.mocked(supplierApi.list).mockResolvedValue(pageOf([supplier]));
     renderPage(<PurchasesPage />, "/app/purchases");
-    expect(await screen.findByText("PUR-000001")).toBeInTheDocument();
+    expect((await screen.findAllByText("PUR-000001")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("ABC Distributors").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Draft").length).toBeGreaterThan(0);
   });
@@ -304,7 +304,7 @@ describe("Purchase detail receive flow", () => {
       status: "RECEIVED",
       receivedAt: "2026-08-28T10:00:00Z",
     });
-    await user.click(screen.getAllByRole("button", { name: "Receive purchase" })[1]);
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Receive purchase" }));
     expect(purchaseApi.receive).toHaveBeenCalledWith(purchase.id);
     expect(await screen.findByText(/Inventory posting/)).toBeInTheDocument();
   });
