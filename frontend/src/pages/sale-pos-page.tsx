@@ -344,7 +344,13 @@ export function SalePosPage() {
                                 type="number"
                                 min={1}
                                 value={line.quantity}
-                                onChange={(e) => setQuantity(line.productId, Number(e.target.value))}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === "") {
+                                    return;
+                                  }
+                                  setQuantity(line.productId, Number(value));
+                                }}
                               />
                             </TableCell>
                             <TableCell>{inr(line.unitPrice)}</TableCell>
