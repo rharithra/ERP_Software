@@ -29,7 +29,12 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          {user?.tenant.name} — today&apos;s completed bills from the live sales ledger.
+          {user?.tenant.name} — today&apos;s completed bills from the live sales ledger.{" "}
+          {user?.tenant.salesMode === "QUICK_SALE"
+            ? "RetailFlow is configured for Quick Sale."
+            : user?.tenant.salesMode === "PIPELINE"
+              ? "RetailFlow is configured for Sales Pipeline."
+              : "RetailFlow is configured for Hybrid Sales."}
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

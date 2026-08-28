@@ -3,6 +3,8 @@ package in.retailflow.api.tenant.domain;
 import in.retailflow.api.common.audit.AuditedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
@@ -47,11 +49,21 @@ public class Tenant extends AuditedEntity {
     @Column(nullable = false, length = 64)
     private String timezone = "Asia/Kolkata";
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_type", nullable = false, length = 64)
+    private BusinessType businessType = BusinessType.OTHER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sales_mode", nullable = false, length = 32)
+    private SalesMode salesMode = SalesMode.HYBRID;
+
     protected Tenant() {}
 
     public Tenant(UUID id, String name) {
         this.id = id;
         this.name = name;
+        this.businessType = BusinessType.OTHER;
+        this.salesMode = SalesMode.HYBRID;
     }
 
     public UUID getId() {
@@ -144,5 +156,21 @@ public class Tenant extends AuditedEntity {
 
     public String getTimezone() {
         return timezone;
+    }
+
+    public BusinessType getBusinessType() {
+        return businessType;
+    }
+
+    public void setBusinessType(BusinessType businessType) {
+        this.businessType = businessType;
+    }
+
+    public SalesMode getSalesMode() {
+        return salesMode;
+    }
+
+    public void setSalesMode(SalesMode salesMode) {
+        this.salesMode = salesMode;
     }
 }

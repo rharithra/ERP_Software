@@ -210,6 +210,16 @@ Payment methods: `CASH`, `UPI`, `CARD`, `OTHER`. Completed sales store `paymentS
 
 CASHIER may create, complete, cancel, and view sales and invoices. CASHIER cannot manage customers, products, inventory adjustments, suppliers, or company settings.
 
+## Business-aware sales foundation (Milestone 5.1)
+
+`business_type` and `sales_mode` live on `tenants`. They describe **what** the shop sells and **how** it enters a sale. They do not split the ledger.
+
+Quick Sale and Sales Pipeline are different **entry workflows** into the same underlying **Sale → Invoice → Payment → Inventory** system. There is no second sale table, invoice table, or stock quantity.
+
+Recommended `sales_mode` (owner may override): grocery → `QUICK_SALE`; water purifier / furniture → `PIPELINE`; electronics, mobiles, hardware, other → `HYBRID`.
+
+Existing tenants migrate to `OTHER` / `HYBRID`. OWNER updates via `PUT /api/v1/tenant`. MANAGER may still update company identity, not sales configuration. Navigation hides future pipeline items for Quick Sale; Pipeline/Hybrid show Leads/Follow-ups/Quotations/Sales orders as coming soon. Those modules are **not implemented**.
+
 ## What this repo will not do in M5
 
 Sales returns, refunds, credit/receivables, coupons, loyalty, payment gateways, thermal printer SDKs, CGST/SGST/IGST split, warehouses, batches, serials, and accounting ledgers stay out until later milestones.

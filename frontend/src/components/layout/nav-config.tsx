@@ -2,6 +2,8 @@ import {
   BarChart3,
   Boxes,
   ClipboardList,
+  FileText,
+  Handshake,
   LayoutDashboard,
   Package,
   Receipt,
@@ -15,18 +17,21 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "@/auth/auth-context";
 import { cn } from "@/lib/utils";
+import type { SalesMode } from "@/lib/sales-experience";
 
 export type NavItem = {
   label: string;
   to: string;
   icon: LucideIcon;
   available: boolean;
+  pipeline?: boolean;
 };
 
-export const NAV_ITEMS: NavItem[] = [
+const CORE_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/app", icon: LayoutDashboard, available: true },
-  { label: "Sales", to: "/app/sales", icon: ShoppingBag, available: true },
+  { label: "POS / Sales", to: "/app/sales", icon: ShoppingBag, available: true },
   { label: "Categories", to: "/app/categories", icon: Tags, available: true },
   { label: "Products", to: "/app/products", icon: Package, available: true },
   { label: "Inventory", to: "/app/inventory", icon: Boxes, available: true },
@@ -37,8 +42,30 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Expenses", to: "/app/expenses", icon: Wallet, available: false },
   { label: "Employees", to: "/app/employees", icon: Users, available: false },
   { label: "Company", to: "/app/company", icon: Store, available: true },
-  { label: "Settings", to: "/app/settings", icon: Settings, available: false },
+  { label: "Settings", to: "/app/settings", icon: Settings, available: true },
 ];
+
+const PIPELINE_ITEMS: NavItem[] = [
+  { label: "Leads", to: "/app/leads", icon: Handshake, available: false, pipeline: true },
+  { label: "Follow-ups", to: "/app/follow-ups", icon: ClipboardList, available: false, pipeline: true },
+  { label: "Quotations", to: "/app/quotations", icon: FileText, available: false, pipeline: true },
+  { label: "Sales orders", to: "/app/sales-orders", icon: Receipt, available: false, pipeline: true },
+];
+
+export function navItemsFor(salesMode: SalesMode | string | undefined): NavItem[] {
+  const mode: SalesMode =
+    salesMode === "QUICK_SALE" || salesMode === "PIPELINE" || salesMode === "HYBRID" ? salesMode : "HYBRID";
+  const salesLabel = mode === "PIPELINE" ? "Sales" : "POS / Sales";
+  const core = CORE_ITEMS.map((item) => (item.to === "/app/sales" ? { ...item, label: salesLabel } : item));
+  if (mode === "QUICK_SALE") {
+    return core;
+  }
+  const dashboard = core[0];
+  const rest = core.slice(1);
+  return [dashboard, ...PIPELINE_ITEMS, ...rest];
+}
+
+export const NAV_ITEMS = CORE_ITEMS;
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -57,9 +84,11 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 }
 
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const { user } = useAuth();
+  const items = navItemsFor(user?.tenant.salesMode);
   return (
     <nav className="flex flex-col gap-1 px-3">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         if (!item.available) {
           return (

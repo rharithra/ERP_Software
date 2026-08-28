@@ -1,3 +1,5 @@
+import type { BusinessType, SalesMode } from "@/lib/sales-experience";
+
 const TOKEN_KEY = "retailflow.accessToken";
 
 export type TenantSummary = {
@@ -5,6 +7,8 @@ export type TenantSummary = {
   name: string;
   currency: string;
   timezone: string;
+  businessType: BusinessType;
+  salesMode: SalesMode;
 };
 
 export type AuthUser = {
@@ -29,6 +33,8 @@ export type CompanyProfile = {
   pincode: string | null;
   currency: string;
   timezone: string;
+  businessType: BusinessType;
+  salesMode: SalesMode;
 };
 
 type ApiError = {
@@ -115,8 +121,14 @@ export type AuthPayload = {
 };
 
 export const authApi = {
-  signup: (body: { fullName: string; email: string; password: string; companyName: string }) =>
-    apiRequest<AuthPayload>("/api/v1/auth/signup", { method: "POST", body: JSON.stringify(body) }),
+  signup: (body: {
+    fullName: string;
+    email: string;
+    password: string;
+    companyName: string;
+    businessType: BusinessType;
+    salesMode: SalesMode;
+  }) => apiRequest<AuthPayload>("/api/v1/auth/signup", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) =>
     apiRequest<AuthPayload>("/api/v1/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => apiRequest<AuthUser>("/api/v1/auth/me"),

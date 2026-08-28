@@ -18,12 +18,24 @@ public final class AuthTestSupport {
 
     public static SignupResult signup(TestRestTemplate rest, ObjectMapper mapper, String companyName)
             throws Exception {
+        return signup(rest, mapper, companyName, null, null);
+    }
+
+    public static SignupResult signup(
+            TestRestTemplate rest, ObjectMapper mapper, String companyName, String businessType, String salesMode)
+            throws Exception {
         String email = "owner-" + UUID.randomUUID() + "@retailflow.test";
-        Map<String, String> body = Map.of(
-                "fullName", "Ananya Sharma",
-                "email", email,
-                "password", "SecurePass9",
-                "companyName", companyName);
+        Map<String, String> body = new java.util.HashMap<>();
+        body.put("fullName", "Ananya Sharma");
+        body.put("email", email);
+        body.put("password", "SecurePass9");
+        body.put("companyName", companyName);
+        if (businessType != null) {
+            body.put("businessType", businessType);
+        }
+        if (salesMode != null) {
+            body.put("salesMode", salesMode);
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         ResponseEntity<String> response =

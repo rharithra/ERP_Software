@@ -11,8 +11,11 @@ Milestones 1–5 are complete:
 - inventory balances, opening stock, adjustments, and movement history
 - suppliers, draft purchases, goods receiving, and PURCHASE_RECEIPT stock movements
 - customers, POS/sales, SALE stock movements, and printable invoices
+- tenant business type and sales experience (Quick Sale / Pipeline / Hybrid) as navigation configuration
 
-Remaining modules stay coming-soon (reports, expenses, employees, settings).
+Remaining modules stay coming-soon (reports, expenses, employees, leads/quotations).
+
+Sales Pipeline modules such as Leads, Follow-ups, Quotations and Sales Orders are NOT implemented in this milestone.
 
 ## Architecture
 
@@ -116,11 +119,11 @@ Backend tests cover password hashing, JWT claims, signup/login, authorization, t
 
 ## Current milestone
 
-**Milestone 5 — Customers, sales/POS, and invoices**
+**Milestone 5.1 — Business-aware sales foundation**
 
-Done when a retailer can record a customer, bill products at the counter, complete a sale, see inventory decrease through the existing Inventory module (`SALE`), and print an invoice (`INV-000001`). Creating a draft does **not** decrease stock.
+Tenants store business type and sales mode. Onboarding recommends a mode. Owners can change it in Settings. Navigation follows the mode. POS, invoices, and inventory stay the single transaction engine.
 
-**Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** are complete.
+**Milestone 5**, **Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** are complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -177,6 +180,8 @@ List query params: `q`, `categoryId`, `status` (`IN_STOCK` / `LOW_STOCK` / `OUT_
 
 Purchase list query params: `q` (purchase number), `supplierId`, `status` (`DRAFT` / `RECEIVED` / `CANCELLED`), `fromDate`, `toDate`, `page`, `size`. Totals are always recalculated on the server. Receiving is atomic and posts through `InventoryService`.
 
+Signup and `PUT /api/v1/tenant` accept `businessType` and `salesMode`. Reads: OWNER, MANAGER, CASHIER. Only OWNER may change those two fields.
+
 ## Customer and sales API (authenticated; tenant from JWT)
 
 | Method | Path | Roles |
@@ -204,6 +209,7 @@ UI: `/app/customers`, `/app/sales`, `/app/sales/new` (POS), `/app/sales/:id`, `/
 
 ## Later milestones
 
-1. Purchase returns, sales returns, supplier/customer payments
-2. Reports, expenses, employees, notifications
-3. VPS deployment with Caddy/Nginx
+1. Sales pipeline (leads, follow-ups, quotations, sales orders) feeding the existing sale engine
+2. Purchase returns, sales returns, supplier/customer payments
+3. Reports, expenses, employees, notifications
+4. VPS deployment with Caddy/Nginx

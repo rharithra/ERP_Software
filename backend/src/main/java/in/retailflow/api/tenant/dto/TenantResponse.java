@@ -1,5 +1,8 @@
 package in.retailflow.api.tenant.dto;
 
+import in.retailflow.api.tenant.domain.BusinessType;
+import in.retailflow.api.tenant.domain.SalesMode;
+
 public record TenantResponse(
         String id,
         String name,
@@ -13,4 +16,6 @@ public record TenantResponse(
         String state,
         String pincode,
         String currency,
-        String timezone) {}
+        String timezone,
+        BusinessType businessType,
+        SalesMode salesMode) {}

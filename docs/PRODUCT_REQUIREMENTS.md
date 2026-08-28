@@ -948,3 +948,30 @@ Browser print / Save as PDF of the completed sale. Route `/app/sales/:id/invoice
 
 Returns, refunds, credit, coupons, loyalty, payment gateways, hardware SDKs, CGST/SGST/IGST engine, accounting, warehouses, batches, serials.
 
+---
+
+# 37. Milestone 5.1 — Business-aware sales foundation (COMPLETE)
+
+Tenant configuration so different shops see the right **entry** into one sales engine.
+
+## Models
+
+**Business type** (what you sell): GROCERY_SUPERMARKET, ELECTRONICS_COMPUTER, MOBILE_ACCESSORIES, APPLIANCES_WATER_PURIFIER, FURNITURE, HARDWARE_BUILDING_MATERIALS, OTHER.
+
+**Sales mode** (how you sell): QUICK_SALE, PIPELINE, HYBRID. Recommendations exist; the owner may override. Changing mode never deletes sales, invoices, products, inventory, or customers.
+
+Quick Sale and Sales Pipeline are different entry workflows into the same Sale → Invoice → Payment → Inventory system. This milestone does **not** implement Leads, Follow-ups, Quotations, or Sales Orders.
+
+## APIs
+
+Signup accepts optional `businessType` / `salesMode`. Omitted type defaults to OTHER; omitted mode uses the recommendation. `GET/PUT /api/v1/tenant` includes both fields. OWNER-only mutation of those fields.
+
+## UI
+
+Signup: business type + recommended sales mode. Settings: Business profile. Navigation: Quick Sale hides future CRM items; Pipeline/Hybrid show them as Coming Soon. Dashboard states the configured experience.
+
+## Out of scope
+
+Leads, CRM, quotations, sales orders, payment module, returns.
+
+

@@ -137,7 +137,7 @@ describe("Inventory page", () => {
       email: "cashier@shop.test",
       fullName: "Ravi Cashier",
       role: "CASHIER",
-      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata" },
+      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata", businessType: "OTHER", salesMode: "HYBRID" },
     });
     vi.mocked(inventoryApi.list).mockResolvedValue(pageOf([milk]));
     vi.mocked(inventoryApi.summary).mockResolvedValue({ totalProducts: 1, inStock: 1, lowStock: 0, outOfStock: 0 });

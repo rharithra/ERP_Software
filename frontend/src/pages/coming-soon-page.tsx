@@ -14,9 +14,21 @@ const COPY: Record<string, { title: string; body: string }> = {
     title: "Employees",
     body: "Invite managers and cashiers once membership management ships.",
   },
-  "/app/settings": {
-    title: "Settings",
-    body: "Tax templates, invoice series, and store preferences will extend the company profile.",
+  "/app/leads": {
+    title: "Leads",
+    body: "Sales pipeline modules such as Leads, Follow-ups, Quotations and Sales Orders are not implemented in this milestone. They will later create the same Sale → Invoice → Inventory records as POS.",
+  },
+  "/app/follow-ups": {
+    title: "Follow-ups",
+    body: "Follow-ups are not implemented yet. They will sit on the pipeline that eventually becomes a RetailFlow sale.",
+  },
+  "/app/quotations": {
+    title: "Quotations",
+    body: "Quotations are not implemented yet. A later milestone will convert accepted quotations into the existing sales engine — not a second invoice system.",
+  },
+  "/app/sales-orders": {
+    title: "Sales orders",
+    body: "Sales orders are not implemented yet. They will be an entry workflow into the same Sale, invoice, and inventory ledger used by POS.",
   },
 };
 

@@ -15,10 +15,14 @@ import in.retailflow.api.security.jwt.JwtService;
 import in.retailflow.api.security.tenant.TenantBypass;
 import in.retailflow.api.security.tenant.TenantContext;
 import in.retailflow.api.security.tenant.TenantContext.TenantPrincipal;
+import in.retailflow.api.tenant.domain.BusinessType;
+import in.retailflow.api.tenant.domain.SalesMode;
 import in.retailflow.api.tenant.domain.Tenant;
 import in.retailflow.api.tenant.domain.TenantMembership;
 import in.retailflow.api.tenant.repository.TenantMembershipRepository;
 import in.retailflow.api.tenant.repository.TenantRepository;
+import in.retailflow.api.tenant.service.SalesModeRecommendation;
+import in.retailflow.api.tenant.service.TenantService;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -64,6 +68,16 @@ public class AuthService {
         }
 
         Tenant tenant = new Tenant(UUID.randomUUID(), request.companyName().trim());
+        BusinessType businessType = TenantService.parseBusinessType(request.businessType(), true);
+        if (businessType == null) {
+            businessType = BusinessType.OTHER;
+        }
+        SalesMode salesMode = TenantService.parseSalesMode(request.salesMode(), true);
+        if (salesMode == null) {
+            salesMode = SalesModeRecommendation.recommend(businessType);
+        }
+        tenant.setBusinessType(businessType);
+        tenant.setSalesMode(salesMode);
         tenantRepository.save(tenant);
 
         UserAccount user = new UserAccount(
@@ -113,7 +127,13 @@ public class AuthService {
                 principal.email(),
                 principal.fullName(),
                 principal.role(),
-                new TenantSummary(tenant.getId().toString(), tenant.getName(), tenant.getCurrency(), tenant.getTimezone()));
+                new TenantSummary(
+                        tenant.getId().toString(),
+                        tenant.getName(),
+                        tenant.getCurrency(),
+                        tenant.getTimezone(),
+                        tenant.getBusinessType().name(),
+                        tenant.getSalesMode().name()));
     }
 
     private AuthResponse toAuthResponse(UserAccount user, Tenant tenant, TenantRole role) {
@@ -124,7 +144,12 @@ public class AuthService {
                 user.getFullName(),
                 role.name(),
                 new TenantSummary(
-                        tenant.getId().toString(), tenant.getName(), tenant.getCurrency(), tenant.getTimezone()));
+                        tenant.getId().toString(),
+                        tenant.getName(),
+                        tenant.getCurrency(),
+                        tenant.getTimezone(),
+                        tenant.getBusinessType().name(),
+                        tenant.getSalesMode().name()));
         return new AuthResponse(token, "Bearer", jwtService.getExpirationMs() / 1000, authenticatedUser);
     }
 

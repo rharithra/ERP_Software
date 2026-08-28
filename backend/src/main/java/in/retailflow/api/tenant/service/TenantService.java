@@ -2,7 +2,10 @@ package in.retailflow.api.tenant.service;
 
 import in.retailflow.api.common.exception.ErrorCodes;
 import in.retailflow.api.common.exception.RetailflowException;
+import in.retailflow.api.identity.domain.TenantRole;
 import in.retailflow.api.security.tenant.TenantContext;
+import in.retailflow.api.tenant.domain.BusinessType;
+import in.retailflow.api.tenant.domain.SalesMode;
 import in.retailflow.api.tenant.domain.Tenant;
 import in.retailflow.api.tenant.dto.TenantResponse;
 import in.retailflow.api.tenant.dto.UpdateTenantRequest;
@@ -40,7 +43,63 @@ public class TenantService {
         tenant.setCity(blankToNull(request.city()));
         tenant.setState(blankToNull(request.state()));
         tenant.setPincode(blankToNull(request.pincode()));
+        applySalesConfiguration(tenant, request.businessType(), request.salesMode());
         return toResponse(tenant);
+    }
+
+    private void applySalesConfiguration(Tenant tenant, String businessTypeValue, String salesModeValue) {
+        BusinessType nextType = parseBusinessType(businessTypeValue, true);
+        SalesMode nextMode = parseSalesMode(salesModeValue, true);
+        if (nextType == null && nextMode == null) {
+            return;
+        }
+        BusinessType resolvedType = nextType == null ? tenant.getBusinessType() : nextType;
+        SalesMode resolvedMode = nextMode == null ? tenant.getSalesMode() : nextMode;
+        boolean changed = resolvedType != tenant.getBusinessType() || resolvedMode != tenant.getSalesMode();
+        if (changed && !isOwner()) {
+            throw new RetailflowException(
+                    ErrorCodes.ACCESS_DENIED,
+                    "Only the owner can change business type or sales experience",
+                    HttpStatus.FORBIDDEN.value());
+        }
+        tenant.setBusinessType(resolvedType);
+        tenant.setSalesMode(resolvedMode);
+    }
+
+    private static boolean isOwner() {
+        return TenantRole.OWNER.name().equals(TenantContext.require().role());
+    }
+
+    public static BusinessType parseBusinessType(String value, boolean optional) {
+        if (value == null || value.isBlank()) {
+            if (optional) {
+                return null;
+            }
+            throw invalid("Business type is required");
+        }
+        try {
+            return BusinessType.fromValue(value);
+        } catch (IllegalArgumentException ex) {
+            throw invalid("Business type must be a supported RetailFlow business type");
+        }
+    }
+
+    public static SalesMode parseSalesMode(String value, boolean optional) {
+        if (value == null || value.isBlank()) {
+            if (optional) {
+                return null;
+            }
+            throw invalid("Sales mode is required");
+        }
+        try {
+            return SalesMode.fromValue(value);
+        } catch (IllegalArgumentException ex) {
+            throw invalid("Sales mode must be QUICK_SALE, PIPELINE, or HYBRID");
+        }
+    }
+
+    private static RetailflowException invalid(String message) {
+        return new RetailflowException(ErrorCodes.VALIDATION_ERROR, message, HttpStatus.BAD_REQUEST.value());
     }
 
     private Tenant loadCurrentTenant() {
@@ -58,7 +117,7 @@ public class TenantService {
         return value.trim();
     }
 
-    private static TenantResponse toResponse(Tenant tenant) {
+    public static TenantResponse toResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId().toString(),
                 tenant.getName(),
@@ -72,6 +131,8 @@ public class TenantService {
                 tenant.getState(),
                 tenant.getPincode(),
                 tenant.getCurrency(),
-                tenant.getTimezone());
+                tenant.getTimezone(),
+                tenant.getBusinessType(),
+                tenant.getSalesMode());
     }
 }

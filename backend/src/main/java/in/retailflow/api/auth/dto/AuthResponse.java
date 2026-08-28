@@ -6,5 +6,11 @@ public record AuthResponse(
     public record AuthenticatedUser(
             String id, String email, String fullName, String role, TenantSummary tenant) {}
 
-    public record TenantSummary(String id, String name, String currency, String timezone) {}
+    public record TenantSummary(
+            String id,
+            String name,
+            String currency,
+            String timezone,
+            String businessType,
+            String salesMode) {}
 }

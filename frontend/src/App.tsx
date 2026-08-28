@@ -22,6 +22,7 @@ import { SaleDetailPage } from "@/pages/sale-detail-page";
 import { SaleInvoicePage } from "@/pages/sale-invoice-page";
 import { SalePosPage } from "@/pages/sale-pos-page";
 import { SalesPage } from "@/pages/sales-page";
+import { SettingsPage } from "@/pages/settings-page";
 import { SignupPage } from "@/pages/signup-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 
@@ -71,7 +72,11 @@ export default function App() {
                   <Route path="reports" element={<ComingSoonPage />} />
                   <Route path="expenses" element={<ComingSoonPage />} />
                   <Route path="employees" element={<ComingSoonPage />} />
-                  <Route path="settings" element={<ComingSoonPage />} />
+                  <Route path="leads" element={<ComingSoonPage />} />
+                  <Route path="follow-ups" element={<ComingSoonPage />} />
+                  <Route path="quotations" element={<ComingSoonPage />} />
+                  <Route path="sales-orders" element={<ComingSoonPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

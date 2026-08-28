@@ -183,7 +183,7 @@ describe("Suppliers page", () => {
       email: "cashier@shop.test",
       fullName: "Ravi Cashier",
       role: "CASHIER",
-      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata" },
+      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata", businessType: "OTHER", salesMode: "HYBRID" },
     });
     vi.mocked(supplierApi.list).mockResolvedValue(pageOf([supplier]));
     vi.mocked(supplierApi.summary).mockResolvedValue({ totalSuppliers: 1, activeSuppliers: 1, inactiveSuppliers: 0 });
@@ -316,7 +316,7 @@ describe("Purchase detail receive flow", () => {
       email: "cashier@shop.test",
       fullName: "Ravi Cashier",
       role: "CASHIER",
-      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata" },
+      tenant: { id: "t1", name: "Shop", currency: "INR", timezone: "Asia/Kolkata", businessType: "OTHER", salesMode: "HYBRID" },
     });
     vi.mocked(purchaseApi.get).mockResolvedValue(purchase);
     render(

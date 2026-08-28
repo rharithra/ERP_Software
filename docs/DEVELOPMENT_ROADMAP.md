@@ -24,6 +24,10 @@ Suppliers, purchase drafts, goods receiving, and inventory integration. Purchase
 
 Customers, POS, GST-aware invoices (invoice = completed sale), SALE stock movements through InventoryService, printer-friendly receipts. Returns, credit, and CGST/SGST split are later.
 
+## Milestone 5.1 — Business-aware sales foundation — COMPLETE
+
+Business type and sales mode on the tenant. Recommended sales experience at onboarding. Owner can change it in Settings. Navigation is mode-aware. **Sales Pipeline modules such as Leads, Follow-ups, Quotations and Sales Orders are NOT implemented in this milestone.** Quick Sale and Pipeline remain entry workflows into the same Sale → Invoice → Inventory engine.
+
 ## Milestone 6 — Control plane
 
 Reports, expenses, employees/invites, notification center.
