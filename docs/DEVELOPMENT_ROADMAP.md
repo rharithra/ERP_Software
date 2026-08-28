@@ -20,9 +20,9 @@ Single-location stock balances, opening stock, manual adjustments, reorder level
 
 Suppliers, purchase drafts, goods receiving, and inventory integration. Purchase returns and supplier payments are later.
 
-## Milestone 5 — Sales and GST
+## Milestone 5 — Sales and GST — COMPLETE
 
-Customers, POS, GST-aware invoices, printer-friendly receipts.
+Customers, POS, GST-aware invoices (invoice = completed sale), SALE stock movements through InventoryService, printer-friendly receipts. Returns, credit, and CGST/SGST split are later.
 
 ## Milestone 6 — Control plane
 

@@ -2,14 +2,6 @@ import { useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const COPY: Record<string, { title: string; body: string }> = {
-  "/app/sales": {
-    title: "Sales / POS",
-    body: "Counter billing, GST tax breakup, and printer-friendly receipts will live here. The shell is ready; the ledger is not mocked.",
-  },
-  "/app/customers": {
-    title: "Customers",
-    body: "Credit customers, GSTIN, and outstanding balances will be added with the sales module.",
-  },
   "/app/reports": {
     title: "Reports",
     body: "GST summaries and P&L need real transactional data. This page stays empty until then.",
@@ -44,7 +36,7 @@ export function ComingSoonPage() {
           <CardDescription>{copy.body}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Categories, Products, Inventory, Suppliers, and Purchases are live. Remaining modules stay empty until their
+          Catalog, inventory, purchases, customers, and POS are live. Remaining modules stay empty until their
           milestone — no fake CRUD.
         </CardContent>
       </Card>

@@ -27,8 +27,8 @@ export function LandingPage() {
           </h1>
           <p className="max-w-xl text-base leading-7 text-muted-foreground">
             RetailFlow is a multi-tenant ERP for kirana, garments, mobiles, and general stores.
-            Create a company, become the owner, and work from a GST-ready workspace. Sales,
-            inventory, and billing modules follow once this foundation is in production.
+            Create a company, become the owner, and work from a GST-ready workspace. Catalog,
+            inventory, purchases, customers, and POS billing are live for this store.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button size="lg" asChild>

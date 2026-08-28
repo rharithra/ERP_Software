@@ -2,7 +2,7 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, and general stores.
 
-Milestones 1–4 are complete:
+Milestones 1–5 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
@@ -10,9 +10,9 @@ Milestones 1–4 are complete:
 - categories and products (SKU, barcode, prices, GST slab, unit)
 - inventory balances, opening stock, adjustments, and movement history
 - suppliers, draft purchases, goods receiving, and PURCHASE_RECEIPT stock movements
-- remaining modules stay coming-soon (sales/POS, customers, invoices)
+- customers, POS/sales, SALE stock movements, and printable invoices
 
-Sales, POS, customers, and GST invoices are intentionally not implemented yet.
+Remaining modules stay coming-soon (reports, expenses, employees, settings).
 
 ## Architecture
 
@@ -112,15 +112,15 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, inventory opening/adjustments, suppliers, and purchase receiving.
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, inventory opening/adjustments, suppliers, purchase receiving, customers, sales completion, SALE movements, and concurrent stock.
 
 ## Current milestone
 
-**Milestone 4 — Suppliers, purchases, and goods receiving**
+**Milestone 5 — Customers, sales/POS, and invoices**
 
-Done when a retailer can record a supplier, save a DRAFT purchase, receive it, and see inventory increase through the existing Inventory module (`PURCHASE_RECEIPT`). Creating a draft does **not** add stock.
+Done when a retailer can record a customer, bill products at the counter, complete a sale, see inventory decrease through the existing Inventory module (`SALE`), and print an invoice (`INV-000001`). Creating a draft does **not** decrease stock.
 
-**Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, and **Milestone 3** are complete.
+**Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** are complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -140,7 +140,7 @@ Done when a retailer can record a supplier, save a DRAFT purchase, receive it, a
 
 List query params: `q`, `active`, `page` (1-based), `size` (max 100). Products also accept `categoryId`. Tenant id in query/body/path is ignored.
 
-UI routes: `/app/categories`, `/app/products`, `/app/inventory`, `/app/suppliers`, `/app/purchases`.
+UI routes: `/app/categories`, `/app/products`, `/app/inventory`, `/app/suppliers`, `/app/purchases`, `/app/customers`, `/app/sales`.
 
 ## Inventory API (authenticated; tenant from JWT)
 
@@ -177,9 +177,33 @@ List query params: `q`, `categoryId`, `status` (`IN_STOCK` / `LOW_STOCK` / `OUT_
 
 Purchase list query params: `q` (purchase number), `supplierId`, `status` (`DRAFT` / `RECEIVED` / `CANCELLED`), `fromDate`, `toDate`, `page`, `size`. Totals are always recalculated on the server. Receiving is atomic and posts through `InventoryService`.
 
+## Customer and sales API (authenticated; tenant from JWT)
+
+| Method | Path | Roles |
+| --- | --- | --- |
+| GET | `/api/v1/customers` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/customers/summary` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/customers/active` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/customers/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/customers` | OWNER, MANAGER |
+| PUT | `/api/v1/customers/{id}` | OWNER, MANAGER |
+| PATCH | `/api/v1/customers/{id}/status` | OWNER, MANAGER |
+| GET | `/api/v1/sales` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/sales/summary` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/sales/dashboard` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/sales/{id}` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/sales/{id}/invoice` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/sales` | OWNER, MANAGER, CASHIER |
+| PUT | `/api/v1/sales/{id}` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/sales/{id}/complete` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/sales/{id}/cancel` | OWNER, MANAGER, CASHIER |
+
+Sales list query params: `q` (sale or invoice number, customer name), `customerId`, `status` (`DRAFT` / `COMPLETED` / `CANCELLED`), `fromDate`, `toDate`, `page`, `size`. Completing is atomic and posts through `InventoryService.applySale`. Invoice numbers are allocated on complete. Tenant id in query/body/path is ignored.
+
+UI: `/app/customers`, `/app/sales`, `/app/sales/new` (POS), `/app/sales/:id`, `/app/sales/:id/invoice`.
+
 ## Later milestones
 
-1. Customers, POS, GST invoices
-2. Purchase returns and supplier payments
-3. Reports, expenses, employees, notifications
-4. VPS deployment with Caddy/Nginx
+1. Purchase returns, sales returns, supplier/customer payments
+2. Reports, expenses, employees, notifications
+3. VPS deployment with Caddy/Nginx

@@ -1,6 +1,7 @@
 import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/auth-context";
 import { BrandMark, NavList } from "@/components/layout/nav-config";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -43,11 +44,18 @@ function ThemeToggle() {
 export function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const printInvoice = location.pathname.endsWith("/invoice");
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
+      <aside
+        className={cn(
+          "hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col",
+          printInvoice && "print:hidden",
+        )}
+      >
         <div className="px-4 py-5">
           <BrandMark />
         </div>
@@ -56,7 +64,12 @@ export function AppShell() {
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur lg:px-6">
+        <header
+          className={cn(
+            "sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur lg:px-6",
+            printInvoice && "print:hidden",
+          )}
+        >
           <div className="flex items-center gap-3">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -110,7 +123,7 @@ export function AppShell() {
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 p-4 lg:p-8">
+        <main className={cn("flex-1 p-4 lg:p-8", printInvoice && "print:p-0")}>
           <Outlet />
         </main>
       </div>

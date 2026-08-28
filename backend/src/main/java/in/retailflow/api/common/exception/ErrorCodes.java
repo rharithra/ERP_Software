@@ -23,6 +23,13 @@ public final class ErrorCodes {
     public static final String PURCHASE_NOT_DRAFT = "PURCHASE_NOT_DRAFT";
     public static final String PURCHASE_EMPTY = "PURCHASE_EMPTY";
     public static final String PRODUCT_INACTIVE = "PRODUCT_INACTIVE";
+    public static final String CUSTOMER_NOT_FOUND = "CUSTOMER_NOT_FOUND";
+    public static final String CUSTOMER_PHONE_TAKEN = "CUSTOMER_PHONE_TAKEN";
+    public static final String CUSTOMER_INACTIVE = "CUSTOMER_INACTIVE";
+    public static final String SALE_NOT_FOUND = "SALE_NOT_FOUND";
+    public static final String SALE_NOT_DRAFT = "SALE_NOT_DRAFT";
+    public static final String SALE_NOT_COMPLETED = "SALE_NOT_COMPLETED";
+    public static final String SALE_EMPTY = "SALE_EMPTY";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}

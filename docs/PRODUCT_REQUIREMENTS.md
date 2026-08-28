@@ -906,4 +906,45 @@ DRAFT does not change stock and can be edited or cancelled. RECEIVED is full rec
 
 ## Out of scope
 
-Sales, POS, customers, invoices, purchase returns, supplier payments, warehouses, FIFO/weighted average costing, CGST/SGST split, e-invoicing.
+Sales returns, refunds, credit/receivables, coupons, loyalty, payment gateways, thermal printer SDKs, CGST/SGST/IGST split, e-invoicing, warehouses, FIFO/weighted average costing.
+
+---
+
+# 36. Milestone 5 — Customers, sales/POS, and invoices (COMPLETE)
+
+Daily retail billing for the authenticated tenant. Inventory stays the single source of truth for quantity.
+
+## Models
+
+**Customer** — tenant-owned buyer master. Name required. Optional phone (unique per tenant when set), email, address, GSTIN, notes. Active flag; no hard delete.
+
+**Sale** — `SAL-000001` style number, optional customer (walk-in allowed), date, DRAFT / COMPLETED / CANCELLED, server-calculated subtotal / discount / tax / grand total (`NUMERIC` / `BigDecimal`), payment method, notes, createdBy. Completed sales also store invoice number `INV-000001`, payment status PAID, and company/customer snapshots for printing.
+
+**Sale item** — product (same tenant), snapshotted name/SKU/unit, quantity (`NUMERIC(19,3)`), unit selling price, GST slab (0/5/12/18/28), line taxable/tax/total.
+
+## Lifecycle
+
+DRAFT does not change stock and can be edited or cancelled. COMPLETED is full completion only: `SaleService` → `InventoryService.applySale` → balance lock → `SALE` movement (`referenceType=SALE`). Insufficient stock rolls back the entire sale (`INSUFFICIENT_STOCK`). Double complete is rejected. Completed sales cannot be edited. Cancelled sales cannot be completed. Returns/refunds are out of scope.
+
+## POS
+
+`/app/sales/new`: search by name/SKU/barcode, scanner-as-keyboard Enter to add, cart quantities, sale-level discount, walk-in or existing customer, payment method CASH/UPI/CARD/OTHER. Completing posts stock and opens the invoice.
+
+## Invoice
+
+Browser print / Save as PDF of the completed sale. Route `/app/sales/:id/invoice`. Company fields come from Tenant snapshots taken at complete time. No server-side PDF.
+
+## APIs
+
+`/api/v1/customers` CRUD + status + summary. Reads: OWNER/MANAGER/CASHIER. Mutations: OWNER/MANAGER.
+
+`/api/v1/sales` list/summary/dashboard/get/invoice/create/update/complete/cancel. OWNER/MANAGER/CASHIER for sales writes. Tenant from JWT only.
+
+## UI
+
+`/app/customers`, `/app/sales`, `/app/sales/new`, `/app/sales/:id`, `/app/sales/:id/invoice`. Dashboard shows today's orders/revenue from completed sales.
+
+## Out of scope
+
+Returns, refunds, credit, coupons, loyalty, payment gateways, hardware SDKs, CGST/SGST/IGST engine, accounting, warehouses, batches, serials.
+

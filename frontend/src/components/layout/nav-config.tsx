@@ -26,11 +26,11 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/app", icon: LayoutDashboard, available: true },
-  { label: "Sales", to: "/app/sales", icon: ShoppingBag, available: false },
+  { label: "Sales", to: "/app/sales", icon: ShoppingBag, available: true },
   { label: "Categories", to: "/app/categories", icon: Tags, available: true },
   { label: "Products", to: "/app/products", icon: Package, available: true },
   { label: "Inventory", to: "/app/inventory", icon: Boxes, available: true },
-  { label: "Customers", to: "/app/customers", icon: Users, available: false },
+  { label: "Customers", to: "/app/customers", icon: Users, available: true },
   { label: "Suppliers", to: "/app/suppliers", icon: Truck, available: true },
   { label: "Purchases", to: "/app/purchases", icon: ClipboardList, available: true },
   { label: "Reports", to: "/app/reports", icon: BarChart3, available: false },

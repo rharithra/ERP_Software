@@ -53,12 +53,13 @@ function movementLabel(type: StockMovement["type"]) {
   if (type === "OPENING_STOCK") return "Opening stock";
   if (type === "ADJUSTMENT_IN") return "Stock in";
   if (type === "PURCHASE_RECEIPT") return "Purchase receipt";
+  if (type === "SALE") return "Sale";
   return "Stock out";
 }
 
 function signedChange(movement: StockMovement) {
   const amount = qty(movement.quantity);
-  return movement.type === "ADJUSTMENT_OUT" ? `−${amount}` : `+${amount}`;
+  return movement.type === "ADJUSTMENT_OUT" || movement.type === "SALE" ? `−${amount}` : `+${amount}`;
 }
 
 export function InventoryPage() {
@@ -241,8 +242,8 @@ export function InventoryPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Single-location stock for this shop. Receiving a purchase posts PURCHASE_RECEIPT here. POS sales are still
-          later.
+          Single-location stock for this shop. Purchases post PURCHASE_RECEIPT. Completed POS sales post SALE and
+          decrease quantity.
         </p>
       </div>
 

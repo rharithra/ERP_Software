@@ -3,50 +3,60 @@ import { IndianRupee, Package, ShoppingCart, TriangleAlert } from "lucide-react"
 import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { inventoryApi } from "@/lib/api";
+import { inventoryApi, saleApi, type Sale, type SaleDashboard } from "@/lib/api";
+import { inr } from "@/lib/sale-math";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const [lowStock, setLowStock] = useState<number | null>(null);
+  const [sales, setSales] = useState<SaleDashboard | null>(null);
 
   useEffect(() => {
     inventoryApi
       .summary()
       .then((summary) => setLowStock(summary.lowStock))
       .catch(() => setLowStock(null));
+    saleApi
+      .dashboard()
+      .then(setSales)
+      .catch(() => setSales(null));
   }, []);
+
+  const recent: Sale[] = sales?.recentSales ?? [];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          {user?.tenant.name} is ready. Sales totals stay empty until POS exists — we will not invent bill numbers.
+          {user?.tenant.name} — today&apos;s completed bills from the live sales ledger.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div>
-              <CardDescription>Today's revenue</CardDescription>
-              <CardTitle className="mt-2 text-3xl font-semibold">—</CardTitle>
+              <CardDescription>Today&apos;s revenue</CardDescription>
+              <CardTitle className="mt-2 text-3xl font-semibold">
+                {sales ? inr(sales.todayRevenue) : "—"}
+              </CardTitle>
             </div>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">INR totals appear after the sales module records bills.</p>
+            <p className="text-sm text-muted-foreground">Grand total of completed sales dated today.</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div>
-              <CardDescription>Today's sales</CardDescription>
-              <CardTitle className="mt-2 text-3xl font-semibold">—</CardTitle>
+              <CardDescription>Today&apos;s orders</CardDescription>
+              <CardTitle className="mt-2 text-3xl font-semibold">{sales ? sales.todayOrders : "—"}</CardTitle>
             </div>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Invoice count will land here once POS is live.</p>
+            <p className="text-sm text-muted-foreground">Completed invoices for this store today.</p>
           </CardContent>
         </Card>
         <Card>
@@ -70,28 +80,39 @@ export function DashboardPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Categories, products, and stock balances are live master data.</p>
+            <p className="text-sm text-muted-foreground">Categories, products, stock, purchases, and POS are live.</p>
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Next setup step</CardTitle>
-          <CardDescription>Record a purchase receipt or opening stock so the shop floor matches RetailFlow.</CardDescription>
+          <CardTitle>Recent sales</CardTitle>
+          <CardDescription>Latest completed bills. Open POS to record the next one.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
-            <Link className="text-sm font-medium text-primary" to="/app/purchases">
-              Open purchases
+          {recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No completed sales yet today or earlier.</p>
+          ) : (
+            <ul className="space-y-3 text-sm">
+              {recent.map((sale) => (
+                <li key={sale.id} className="flex items-center justify-between gap-3">
+                  <Link className="font-medium text-primary" to={`/app/sales/${sale.id}`}>
+                    {sale.saleNumber} · {sale.customerName}
+                  </Link>
+                  <span>{inr(sale.grandTotal)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-6">
+            <Link className="text-sm font-medium text-primary" to="/app/sales/new">
+              Open POS
+            </Link>
+            <Link className="text-sm font-medium text-primary" to="/app/sales">
+              Sales history
             </Link>
             <Link className="text-sm font-medium text-primary" to="/app/inventory">
               Open inventory
-            </Link>
-            <Link className="text-sm font-medium text-primary" to="/app/products">
-              Open products
-            </Link>
-            <Link className="text-sm font-medium text-primary" to="/app/company">
-              Open company profile
             </Link>
           </div>
         </CardContent>

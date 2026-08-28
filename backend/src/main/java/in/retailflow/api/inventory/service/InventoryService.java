@@ -195,6 +195,43 @@ public class InventoryService {
         return toItem(product, balance);
     }
 
+    /**
+     * Decreases stock for a completed sale. Must run inside the sale complete
+     * transaction so a failed line rolls back every line.
+     */
+    @Transactional
+    public InventoryItemResponse applySale(UUID productId, BigDecimal quantity, UUID saleId) {
+        Product product = requireProduct(productId);
+        InventoryBalance balance = lockOrCreate(product);
+        BigDecimal change = scale(quantity);
+        if (change.compareTo(ZERO) <= 0) {
+            throw new RetailflowException(
+                    ErrorCodes.VALIDATION_ERROR,
+                    "Sale quantity must be greater than zero",
+                    HttpStatus.BAD_REQUEST.value());
+        }
+        BigDecimal before = scale(balance.getQuantity());
+        BigDecimal after = before.subtract(change);
+        if (after.compareTo(ZERO) < 0) {
+            throw new RetailflowException(
+                    ErrorCodes.INSUFFICIENT_STOCK,
+                    "Insufficient stock for " + product.getName() + ". Available quantity: " + strip(before),
+                    HttpStatus.CONFLICT.value());
+        }
+        apply(
+                balance,
+                product,
+                StockMovementType.SALE,
+                change,
+                before,
+                after,
+                null,
+                "Sale completed",
+                "SALE",
+                saleId);
+        return toItem(product, balance);
+    }
+
     @Transactional
     public InventoryItemResponse updateReorderLevel(UUID productId, ReorderLevelRequest request) {
         Product product = requireProduct(productId);

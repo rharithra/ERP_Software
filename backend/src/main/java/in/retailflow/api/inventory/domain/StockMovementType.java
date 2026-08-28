@@ -4,5 +4,6 @@ public enum StockMovementType {
     OPENING_STOCK,
     ADJUSTMENT_IN,
     ADJUSTMENT_OUT,
-    PURCHASE_RECEIPT
+    PURCHASE_RECEIPT,
+    SALE
 }

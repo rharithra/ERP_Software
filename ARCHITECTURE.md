@@ -143,7 +143,7 @@ Balance updates take a PostgreSQL row lock (`SELECT FOR UPDATE` / JPA `PESSIMIST
 
 ### Future postings
 
-POS will insert `SALE` movements and decrease quantity. That type is not implemented in M4.
+Milestone 5 posts `SALE` movements through `InventoryService.applySale` and decreases quantity. There is still a single stock quantity on `InventoryBalance`.
 
 ## Purchases (Milestone 4)
 
@@ -176,6 +176,40 @@ Purchase totals are sums of lines. The API ignores client-supplied totals.
 
 CASHIER cannot create, edit, receive, or cancel.
 
-## What this repo will not do in M4
+## Sales (Milestone 5)
 
-Warehouses, multi-location, purchase returns, supplier payments, customers, POS, invoices, batches, serials, expiry, AI, and hardware stay out of the schema and UI until later milestones.
+Tenant-scoped customers, POS, invoices, and inventory decrease. Inventory remains the only current-stock store.
+
+```
+Customer (optional) → Sale (DRAFT) → Complete → InventoryService.applySale
+                                                → InventoryBalance decrease + StockMovement SALE
+                                                → invoice number INV-000001
+```
+
+### Customer
+
+`customers`: name required. Optional phone (unique per tenant when present), email, address, GSTIN, notes. Deactivate instead of delete. OWNER/MANAGER mutate; CASHIER may list/search/view. Tenant id never accepted from the client.
+
+### Sale
+
+Human number `SAL-000001` from a per-tenant counter (`SELECT FOR UPDATE`). Status: `DRAFT` → `COMPLETED` or `DRAFT` → `CANCELLED`. Completed sales cannot be edited or completed again. Cancelled sales cannot be completed. Walk-in customer is `customer_id` null with snapshot name `Walk-in`.
+
+Items snapshot product name, SKU, unit, unit selling price, and GST at save time. Line math (HALF_UP, scale 2):
+
+- `taxable = quantity × unitPrice − lineDiscount`
+- `tax = taxable × gstRate / 100`
+- `lineTotal = taxable + tax`
+
+Sale-level discount reduces grand total after line GST: `grandTotal = subtotal − discount + taxTotal`. Discount cannot exceed subtotal. The API ignores client-supplied totals.
+
+Payment methods: `CASH`, `UPI`, `CARD`, `OTHER`. Completed sales store `paymentStatus=PAID`. No payment gateways.
+
+### Completing
+
+`SaleService.complete` is one transaction: lock the sale, verify DRAFT and non-empty items, lock each inventory row (product ids sorted to reduce deadlock), `InventoryService.applySale` (insufficient stock → `INSUFFICIENT_STOCK`, full rollback), allocate `INV-000001`, snapshot company profile onto the sale, mark COMPLETED. Invoice is the completed sale plus those snapshots — no duplicate financial table.
+
+CASHIER may create, complete, cancel, and view sales and invoices. CASHIER cannot manage customers, products, inventory adjustments, suppliers, or company settings.
+
+## What this repo will not do in M5
+
+Sales returns, refunds, credit/receivables, coupons, loyalty, payment gateways, thermal printer SDKs, CGST/SGST/IGST split, warehouses, batches, serials, and accounting ledgers stay out until later milestones.

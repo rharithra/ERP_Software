@@ -243,7 +243,12 @@ export type InventorySummary = {
   outOfStock: number;
 };
 
-export type StockMovementType = "OPENING_STOCK" | "ADJUSTMENT_IN" | "ADJUSTMENT_OUT" | "PURCHASE_RECEIPT";
+export type StockMovementType =
+  | "OPENING_STOCK"
+  | "ADJUSTMENT_IN"
+  | "ADJUSTMENT_OUT"
+  | "PURCHASE_RECEIPT"
+  | "SALE";
 
 export type StockMovement = {
   id: string;
@@ -392,6 +397,160 @@ export type PurchasePayload = {
   purchaseDate: string;
   notes?: string | null;
   items: PurchaseItemPayload[];
+};
+
+export type Customer = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  gstin: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerSummary = {
+  totalCustomers: number;
+  activeCustomers: number;
+  inactiveCustomers: number;
+};
+
+export type CustomerPayload = {
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  gstin?: string | null;
+  notes?: string | null;
+};
+
+export const customerApi = {
+  list: (params: { q?: string; active?: boolean; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Customer>>(`/api/v1/customers${queryString(params)}`),
+  summary: () => apiRequest<CustomerSummary>("/api/v1/customers/summary"),
+  active: () => apiRequest<Customer[]>("/api/v1/customers/active"),
+  get: (id: string) => apiRequest<Customer>(`/api/v1/customers/${id}`),
+  create: (body: CustomerPayload) =>
+    apiRequest<Customer>("/api/v1/customers", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: CustomerPayload) =>
+    apiRequest<Customer>(`/api/v1/customers/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  updateStatus: (id: string, active: boolean) =>
+    apiRequest<Customer>(`/api/v1/customers/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ active }),
+    }),
+};
+
+export type SaleStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
+export type PaymentMethod = "CASH" | "UPI" | "CARD" | "OTHER";
+export type PaymentStatus = "PAID";
+
+export type SaleItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  unit: string;
+  quantity: number | string;
+  unitPrice: number | string;
+  gstRate: number | string;
+  discount: number | string;
+  taxableAmount: number | string;
+  taxAmount: number | string;
+  lineTotal: number | string;
+};
+
+export type Sale = {
+  id: string;
+  saleNumber: string;
+  invoiceNumber: string | null;
+  customerId: string | null;
+  customerName: string;
+  customerPhone: string | null;
+  customerGstin: string | null;
+  saleDate: string;
+  status: SaleStatus;
+  subtotal: number | string;
+  discount: number | string;
+  taxTotal: number | string;
+  grandTotal: number | string;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
+  notes: string | null;
+  completedAt: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  itemCount: number;
+  items: SaleItem[];
+};
+
+export type SaleSummary = {
+  totalSales: number;
+  draftSales: number;
+  completedSales: number;
+  completedValue: number | string;
+};
+
+export type SaleDashboard = {
+  todayOrders: number;
+  todayRevenue: number | string;
+  recentSales: Sale[];
+};
+
+export type SaleInvoice = {
+  sale: Sale;
+  companyName: string | null;
+  companyGstin: string | null;
+  companyAddress: string | null;
+  companyPhone: string | null;
+};
+
+export type SaleItemPayload = {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  gstRate: number;
+  discount?: number;
+};
+
+export type SalePayload = {
+  customerId?: string | null;
+  saleDate: string;
+  discount?: number;
+  notes?: string | null;
+  items: SaleItemPayload[];
+};
+
+export const saleApi = {
+  list: (
+    params: {
+      q?: string;
+      customerId?: string;
+      status?: SaleStatus;
+      fromDate?: string;
+      toDate?: string;
+      page?: number;
+      size?: number;
+    } = {},
+  ) => apiRequest<PageResult<Sale>>(`/api/v1/sales${queryString(params)}`),
+  summary: () => apiRequest<SaleSummary>("/api/v1/sales/summary"),
+  dashboard: () => apiRequest<SaleDashboard>("/api/v1/sales/dashboard"),
+  get: (id: string) => apiRequest<Sale>(`/api/v1/sales/${id}`),
+  invoice: (id: string) => apiRequest<SaleInvoice>(`/api/v1/sales/${id}/invoice`),
+  create: (body: SalePayload) => apiRequest<Sale>("/api/v1/sales", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: SalePayload) =>
+    apiRequest<Sale>(`/api/v1/sales/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  complete: (id: string, paymentMethod: PaymentMethod) =>
+    apiRequest<Sale>(`/api/v1/sales/${id}/complete`, {
+      method: "POST",
+      body: JSON.stringify({ paymentMethod }),
+    }),
+  cancel: (id: string) => apiRequest<Sale>(`/api/v1/sales/${id}/cancel`, { method: "POST", body: "{}" }),
 };
 
 export const purchaseApi = {
