@@ -7,9 +7,12 @@ import in.retailflow.api.security.tenant.TenantContext;
 import in.retailflow.api.tenant.domain.BusinessType;
 import in.retailflow.api.tenant.domain.SalesMode;
 import in.retailflow.api.tenant.domain.Tenant;
+import in.retailflow.api.tenant.dto.TenantMemberResponse;
 import in.retailflow.api.tenant.dto.TenantResponse;
 import in.retailflow.api.tenant.dto.UpdateTenantRequest;
+import in.retailflow.api.tenant.repository.TenantMembershipRepository;
 import in.retailflow.api.tenant.repository.TenantRepository;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
+    private final TenantMembershipRepository membershipRepository;
 
-    public TenantService(TenantRepository tenantRepository) {
+    public TenantService(TenantRepository tenantRepository, TenantMembershipRepository membershipRepository) {
         this.tenantRepository = tenantRepository;
+        this.membershipRepository = membershipRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TenantMemberResponse> listMembers() {
+        return membershipRepository.findByTenantIdWithUser(TenantContext.requireTenantId()).stream()
+                .map(m -> new TenantMemberResponse(
+                        m.getUser().getId().toString(),
+                        m.getUser().getFullName(),
+                        m.getUser().getEmail(),
+                        m.getRole().name()))
+                .toList();
     }
 
     @Transactional(readOnly = true)

@@ -968,10 +968,50 @@ Signup accepts optional `businessType` / `salesMode`. Omitted type defaults to O
 
 ## UI
 
-Signup: business type + recommended sales mode. Settings: Business profile. Navigation: Quick Sale hides future CRM items; Pipeline/Hybrid show them as Coming Soon. Dashboard states the configured experience.
+Signup: business type + recommended sales mode. Settings: Business profile. Navigation: Quick Sale hides CRM items; Pipeline/Hybrid show them. Dashboard states the configured experience. Changing mode never deletes data.
+
+## Out of scope for 5.1
+
+Pipeline screens themselves (delivered in Milestone 6), returns.
+
+---
+
+# 38. Milestone 6 — Sales pipeline & CRM (COMPLETE)
+
+Support retailers where a sale is not immediate at POS, without splitting the ledger.
+
+## Workflows
+
+**Quick Sale:** Customer → POS → Sale → Invoice → Payment → Inventory.
+
+**Sales Pipeline:** Lead → Follow-up → Quotation → Sales Order → Payment/Advance → Sale → Invoice → Payment → Inventory.
+
+Both use `SaleService`, existing invoices, `PaymentService`, and `InventoryService.applySale`.
+
+## Inventory rule
+
+Quotation: no stock change. Sales order: no stock change. Advance payment: no stock change. Completed sale: decrease stock with a SALE movement.
+
+## Domain
+
+- Leads (`LEAD-000001`) with sources, priority, status NEW…WON/LOST, convert to existing Customer module (phone match avoids duplicates).
+- Follow-ups: CALL/VISIT/WHATSAPP/EMAIL/MEETING/OTHER; PENDING/COMPLETED/CANCELLED; today/overdue/upcoming.
+- Quotations (`QT-000001`) with product snapshots including GST; DRAFT→SENT→ACCEPTED (locked) | REJECTED | EXPIRED | CANCELLED.
+- Sales orders (`SO-000001`) DRAFT→CONFIRMED→PROCESSING→READY→COMPLETED; convert uses `SaleService`.
+- Payments (`PAY-000001`) against sales order and/or sale; outstanding = total − sum(payments); reject amount > outstanding.
+- Append-only `sales_pipeline_activities` timeline. In-app notifications (follow-up due/overdue, quotation expiry/accepted, payment outstanding).
+
+## Authorization
+
+OWNER/MANAGER: CRM. CASHIER: POS, sales, invoices, payments as in M5. Tenant id never from the client.
+
+## UI
+
+`/app/pipeline` (metrics + kanban), `/app/leads`, `/app/follow-ups`, `/app/quotations`, `/app/sales-orders`, `/app/outstanding`, record-payment dialog, customer payment history.
 
 ## Out of scope
 
-Leads, CRM, quotations, sales orders, payment module, returns.
+WhatsApp/email/SMS, payment gateways, customer portal, marketing, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST engine, warehouses, batches, serials, delivery, subscriptions, credit notes, returns, refunds, aging.
+
 
 

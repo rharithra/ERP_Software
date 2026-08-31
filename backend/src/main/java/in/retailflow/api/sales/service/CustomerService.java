@@ -86,7 +86,7 @@ public class CustomerService {
         return toResponse(customer);
     }
 
-    Customer requireActive(UUID id) {
+    public Customer requireActive(UUID id) {
         Customer customer = require(id);
         if (!customer.isActive()) {
             throw new RetailflowException(
@@ -97,7 +97,7 @@ public class CustomerService {
         return customer;
     }
 
-    Customer require(UUID id) {
+    public Customer require(UUID id) {
         return customerRepository
                 .findById(id)
                 .orElseThrow(() -> new RetailflowException(

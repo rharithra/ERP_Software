@@ -110,9 +110,16 @@ export function DashboardPage() {
             </ul>
           )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-6">
-            <Link className="text-sm font-medium text-primary" to="/app/sales/new">
-              Open POS
-            </Link>
+            {user?.tenant.salesMode !== "PIPELINE" ? (
+              <Link className="text-sm font-medium text-primary" to="/app/sales/new">
+                Open POS
+              </Link>
+            ) : null}
+            {user?.tenant.salesMode !== "QUICK_SALE" ? (
+              <Link className="text-sm font-medium text-primary" to="/app/pipeline">
+                Sales pipeline
+              </Link>
+            ) : null}
             <Link className="text-sm font-medium text-primary" to="/app/sales">
               Sales history
             </Link>

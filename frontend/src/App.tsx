@@ -11,16 +11,28 @@ import { CategoriesPage } from "@/pages/categories-page";
 import { CompanyPage } from "@/pages/company-page";
 import { CustomersPage } from "@/pages/customers-page";
 import { DashboardPage } from "@/pages/dashboard-page";
+import { FollowUpsPage } from "@/pages/follow-ups-page";
 import { InventoryPage } from "@/pages/inventory-page";
 import { LandingPage } from "@/pages/landing-page";
+import { LeadDetailPage } from "@/pages/lead-detail-page";
+import { LeadFormPage } from "@/pages/lead-form-page";
+import { LeadsPage } from "@/pages/leads-page";
 import { LoginPage } from "@/pages/login-page";
+import { OutstandingPage } from "@/pages/outstanding-page";
+import { PipelinePage } from "@/pages/pipeline-page";
 import { ProductsPage } from "@/pages/products-page";
 import { PurchaseDetailPage } from "@/pages/purchase-detail-page";
 import { PurchaseFormPage } from "@/pages/purchase-form-page";
 import { PurchasesPage } from "@/pages/purchases-page";
+import { QuotationDetailPage } from "@/pages/quotation-detail-page";
+import { QuotationFormPage } from "@/pages/quotation-form-page";
+import { QuotationsPage } from "@/pages/quotations-page";
 import { SaleDetailPage } from "@/pages/sale-detail-page";
 import { SaleInvoicePage } from "@/pages/sale-invoice-page";
 import { SalePosPage } from "@/pages/sale-pos-page";
+import { SalesOrderDetailPage } from "@/pages/sales-order-detail-page";
+import { SalesOrderFormPage } from "@/pages/sales-order-form-page";
+import { SalesOrdersPage } from "@/pages/sales-orders-page";
 import { SalesPage } from "@/pages/sales-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { SignupPage } from "@/pages/signup-page";
@@ -72,10 +84,18 @@ export default function App() {
                   <Route path="reports" element={<ComingSoonPage />} />
                   <Route path="expenses" element={<ComingSoonPage />} />
                   <Route path="employees" element={<ComingSoonPage />} />
-                  <Route path="leads" element={<ComingSoonPage />} />
-                  <Route path="follow-ups" element={<ComingSoonPage />} />
-                  <Route path="quotations" element={<ComingSoonPage />} />
-                  <Route path="sales-orders" element={<ComingSoonPage />} />
+                  <Route path="pipeline" element={<PipelinePage />} />
+                  <Route path="leads" element={<LeadsPage />} />
+                  <Route path="leads/new" element={<LeadFormPage />} />
+                  <Route path="leads/:id" element={<LeadDetailPage />} />
+                  <Route path="follow-ups" element={<FollowUpsPage />} />
+                  <Route path="quotations" element={<QuotationsPage />} />
+                  <Route path="quotations/new" element={<QuotationFormPage />} />
+                  <Route path="quotations/:id" element={<QuotationDetailPage />} />
+                  <Route path="sales-orders" element={<SalesOrdersPage />} />
+                  <Route path="sales-orders/new" element={<SalesOrderFormPage />} />
+                  <Route path="sales-orders/:id" element={<SalesOrderDetailPage />} />
+                  <Route path="outstanding" element={<OutstandingPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Route>

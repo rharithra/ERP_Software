@@ -62,7 +62,7 @@ describe("sales experience mapping", () => {
     expect(recommendedSalesMode("OTHER")).toBe("HYBRID");
   });
 
-  it("hides pipeline navigation for quick sale and shows coming-soon items for pipeline/hybrid", () => {
+  it("hides pipeline navigation for quick sale and shows CRM items for pipeline/hybrid", () => {
     const quick = navItemsFor("QUICK_SALE").map((item) => item.label);
     expect(quick).toContain("POS / Sales");
     expect(quick).not.toContain("Leads");
@@ -166,7 +166,7 @@ describe("navigation uses tenant sales mode", () => {
     expect(screen.queryByText("Leads")).not.toBeInTheDocument();
   });
 
-  it("shows coming-soon pipeline items for hybrid tenants", async () => {
+  it("shows pipeline items for hybrid tenants", async () => {
     vi.mocked(authApi.me).mockResolvedValue({
       ...owner,
       tenant: { ...owner.tenant, businessType: "ELECTRONICS_COMPUTER", salesMode: "HYBRID" },

@@ -4,6 +4,7 @@ import {
   ClipboardList,
   FileText,
   Handshake,
+  Kanban,
   LayoutDashboard,
   Package,
   Receipt,
@@ -46,10 +47,12 @@ const CORE_ITEMS: NavItem[] = [
 ];
 
 const PIPELINE_ITEMS: NavItem[] = [
-  { label: "Leads", to: "/app/leads", icon: Handshake, available: false, pipeline: true },
-  { label: "Follow-ups", to: "/app/follow-ups", icon: ClipboardList, available: false, pipeline: true },
-  { label: "Quotations", to: "/app/quotations", icon: FileText, available: false, pipeline: true },
-  { label: "Sales orders", to: "/app/sales-orders", icon: Receipt, available: false, pipeline: true },
+  { label: "Pipeline", to: "/app/pipeline", icon: Kanban, available: true, pipeline: true },
+  { label: "Leads", to: "/app/leads", icon: Handshake, available: true, pipeline: true },
+  { label: "Follow-ups", to: "/app/follow-ups", icon: ClipboardList, available: true, pipeline: true },
+  { label: "Quotations", to: "/app/quotations", icon: FileText, available: true, pipeline: true },
+  { label: "Sales orders", to: "/app/sales-orders", icon: Receipt, available: true, pipeline: true },
+  { label: "Outstanding", to: "/app/outstanding", icon: Wallet, available: true, pipeline: true },
 ];
 
 export function navItemsFor(salesMode: SalesMode | string | undefined): NavItem[] {
@@ -85,7 +88,8 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
-  const items = navItemsFor(user?.tenant.salesMode);
+  const crm = user?.role === "OWNER" || user?.role === "MANAGER";
+  const items = navItemsFor(user?.tenant.salesMode).filter((item) => !item.pipeline || crm);
   return (
     <nav className="flex flex-col gap-1 px-3">
       {items.map((item) => {

@@ -134,10 +134,18 @@ export const authApi = {
   me: () => apiRequest<AuthUser>("/api/v1/auth/me"),
 };
 
+export type TenantMember = {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: "OWNER" | "MANAGER" | "CASHIER";
+};
+
 export const tenantApi = {
   get: () => apiRequest<CompanyProfile>("/api/v1/tenant"),
   update: (body: Partial<CompanyProfile> & { name: string }) =>
     apiRequest<CompanyProfile>("/api/v1/tenant", { method: "PUT", body: JSON.stringify(body) }),
+  members: () => apiRequest<TenantMember[]>("/api/v1/tenant/members"),
 };
 
 export type Category = {
@@ -457,8 +465,8 @@ export const customerApi = {
 };
 
 export type SaleStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
-export type PaymentMethod = "CASH" | "UPI" | "CARD" | "OTHER";
-export type PaymentStatus = "PAID";
+export type PaymentMethod = "CASH" | "UPI" | "CARD" | "BANK_TRANSFER" | "OTHER";
+export type PaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID";
 
 export type SaleItem = {
   id: string;
@@ -499,6 +507,9 @@ export type Sale = {
   updatedAt: string;
   itemCount: number;
   items: SaleItem[];
+  salesOrderId?: string | null;
+  paidAmount?: number | string;
+  outstandingAmount?: number | string;
 };
 
 export type SaleSummary = {
@@ -563,6 +574,353 @@ export const saleApi = {
       body: JSON.stringify({ paymentMethod }),
     }),
   cancel: (id: string) => apiRequest<Sale>(`/api/v1/sales/${id}/cancel`, { method: "POST", body: "{}" }),
+};
+
+export type LeadSource =
+  | "WALK_IN"
+  | "PHONE"
+  | "WEBSITE"
+  | "REFERRAL"
+  | "SOCIAL_MEDIA"
+  | "ADVERTISEMENT"
+  | "EXISTING_CUSTOMER"
+  | "OTHER";
+export type LeadPriority = "LOW" | "MEDIUM" | "HIGH";
+export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "QUOTATION" | "NEGOTIATION" | "WON" | "LOST";
+
+export type Lead = {
+  id: string;
+  leadNumber: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  companyName: string | null;
+  address: string | null;
+  source: LeadSource;
+  requirement: string | null;
+  expectedValue: number | string | null;
+  expectedCloseDate: string | null;
+  assignedTo: string | null;
+  assignedToName: string | null;
+  priority: LeadPriority;
+  status: LeadStatus;
+  notes: string | null;
+  lostReason: string | null;
+  convertedCustomerId: string | null;
+  convertedCustomerName: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type LeadPayload = {
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  companyName?: string | null;
+  address?: string | null;
+  source: LeadSource;
+  requirement?: string | null;
+  expectedValue?: number | null;
+  expectedCloseDate?: string | null;
+  assignedTo?: string | null;
+  priority?: LeadPriority;
+  notes?: string | null;
+};
+
+export type FollowUpType = "CALL" | "VISIT" | "WHATSAPP" | "EMAIL" | "MEETING" | "OTHER";
+export type FollowUpStatus = "PENDING" | "COMPLETED" | "CANCELLED";
+
+export type FollowUp = {
+  id: string;
+  leadId: string;
+  leadName: string;
+  leadNumber: string;
+  customerId: string | null;
+  type: FollowUpType;
+  dueDate: string;
+  dueTime: string | null;
+  assignedTo: string | null;
+  assignedToName: string | null;
+  status: FollowUpStatus;
+  notes: string | null;
+  outcome: string | null;
+  completedAt: string | null;
+  overdue: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FollowUpPayload = {
+  leadId: string;
+  customerId?: string | null;
+  type: FollowUpType;
+  dueDate: string;
+  dueTime?: string | null;
+  assignedTo?: string | null;
+  notes?: string | null;
+};
+
+export type QuotationStatus = "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED";
+export type SalesOrderStatus = "DRAFT" | "CONFIRMED" | "PROCESSING" | "READY" | "COMPLETED" | "CANCELLED";
+
+export type PipelineLine = {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  unit: string;
+  quantity: number | string;
+  unitPrice: number | string;
+  gstRate: number | string;
+  discount: number | string;
+  taxableAmount: number | string;
+  taxAmount: number | string;
+  lineTotal: number | string;
+};
+
+export type PipelineLinePayload = {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  gstRate: number;
+  discount?: number;
+};
+
+export type Quotation = {
+  id: string;
+  quotationNumber: string;
+  leadId: string | null;
+  leadName: string | null;
+  customerId: string;
+  customerName: string;
+  quotationDate: string;
+  validUntil: string;
+  status: QuotationStatus;
+  subtotal: number | string;
+  discount: number | string;
+  taxTotal: number | string;
+  grandTotal: number | string;
+  notes: string | null;
+  termsAndConditions: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  itemCount: number;
+  items: PipelineLine[];
+};
+
+export type QuotationPayload = {
+  leadId?: string | null;
+  customerId: string;
+  quotationDate: string;
+  validUntil: string;
+  discount?: number;
+  notes?: string | null;
+  termsAndConditions?: string | null;
+  items: PipelineLinePayload[];
+};
+
+export type SalesOrder = {
+  id: string;
+  orderNumber: string;
+  quotationId: string | null;
+  quotationNumber: string | null;
+  leadId: string | null;
+  customerId: string;
+  customerName: string;
+  saleId: string | null;
+  saleNumber: string | null;
+  invoiceNumber: string | null;
+  orderDate: string;
+  expectedDeliveryDate: string | null;
+  status: SalesOrderStatus;
+  paymentStatus: PaymentStatus;
+  subtotal: number | string;
+  discount: number | string;
+  taxTotal: number | string;
+  grandTotal: number | string;
+  advancePaid: number | string;
+  outstandingAmount: number | string;
+  notes: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  itemCount: number;
+  items: PipelineLine[];
+};
+
+export type SalesOrderPayload = {
+  quotationId?: string | null;
+  leadId?: string | null;
+  customerId: string;
+  orderDate: string;
+  expectedDeliveryDate?: string | null;
+  discount?: number;
+  notes?: string | null;
+  items: PipelineLinePayload[];
+};
+
+export type PaymentRecord = {
+  id: string;
+  paymentNumber: string;
+  saleId: string | null;
+  invoiceNumber: string | null;
+  salesOrderId: string | null;
+  orderNumber: string | null;
+  customerId: string | null;
+  customerName: string | null;
+  amount: number | string;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  referenceNumber: string | null;
+  notes: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+};
+
+export type PaymentPayload = {
+  saleId?: string | null;
+  salesOrderId?: string | null;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: string;
+  referenceNumber?: string | null;
+  notes?: string | null;
+};
+
+export type OutstandingRow = {
+  customerId: string | null;
+  customerName: string;
+  saleId: string;
+  invoiceNumber: string | null;
+  saleDate: string;
+  grandTotal: number | string;
+  paid: number | string;
+  outstanding: number | string;
+  paymentStatus: PaymentStatus;
+};
+
+export type PipelineDashboard = {
+  newLeads: number;
+  openLeads: number;
+  openQuotations: number;
+  quotationValue: number | string;
+  openSalesOrders: number;
+  pipelineValue: number | string;
+  wonThisMonth: number;
+  lostThisMonth: number;
+  followUpsToday: number;
+  followUpsOverdue: number;
+  outstandingPayments: number | string;
+};
+
+export type PipelineActivity = {
+  id: string;
+  activityType: string;
+  message: string;
+  referenceType: string | null;
+  referenceId: string | null;
+  createdAt: string;
+};
+
+export type AppNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  entityType: string | null;
+  entityId: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export const leadApi = {
+  list: (params: { q?: string; status?: LeadStatus; priority?: string; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Lead>>(`/api/v1/leads${queryString(params)}`),
+  board: () => apiRequest<Lead[]>("/api/v1/leads/board"),
+  get: (id: string) => apiRequest<Lead>(`/api/v1/leads/${id}`),
+  timeline: (id: string) => apiRequest<PipelineActivity[]>(`/api/v1/leads/${id}/activities`),
+  create: (body: LeadPayload) => apiRequest<Lead>("/api/v1/leads", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: LeadPayload) =>
+    apiRequest<Lead>(`/api/v1/leads/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  changeStatus: (id: string, status: LeadStatus, lostReason?: string | null) =>
+    apiRequest<Lead>(`/api/v1/leads/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status, lostReason: lostReason ?? null }),
+    }),
+  convertCustomer: (id: string) =>
+    apiRequest<Customer>(`/api/v1/leads/${id}/convert-customer`, { method: "POST", body: "{}" }),
+};
+
+export const followUpApi = {
+  list: (params: { status?: FollowUpStatus; fromDate?: string; toDate?: string; leadId?: string } = {}) =>
+    apiRequest<FollowUp[]>(`/api/v1/follow-ups${queryString(params)}`),
+  create: (body: FollowUpPayload) =>
+    apiRequest<FollowUp>("/api/v1/follow-ups", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: FollowUpPayload) =>
+    apiRequest<FollowUp>(`/api/v1/follow-ups/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  complete: (id: string, outcome?: string | null) =>
+    apiRequest<FollowUp>(`/api/v1/follow-ups/${id}/complete`, {
+      method: "POST",
+      body: JSON.stringify({ outcome: outcome ?? null }),
+    }),
+  cancel: (id: string, outcome?: string | null) =>
+    apiRequest<FollowUp>(`/api/v1/follow-ups/${id}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ outcome: outcome ?? null }),
+    }),
+};
+
+export const quotationApi = {
+  list: (params: { q?: string; status?: QuotationStatus; customerId?: string; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<Quotation>>(`/api/v1/quotations${queryString(params)}`),
+  get: (id: string) => apiRequest<Quotation>(`/api/v1/quotations/${id}`),
+  create: (body: QuotationPayload) =>
+    apiRequest<Quotation>("/api/v1/quotations", { method: "POST", body: JSON.stringify(body) }),
+  update: (id: string, body: QuotationPayload) =>
+    apiRequest<Quotation>(`/api/v1/quotations/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  send: (id: string) => apiRequest<Quotation>(`/api/v1/quotations/${id}/send`, { method: "POST", body: "{}" }),
+  accept: (id: string) => apiRequest<Quotation>(`/api/v1/quotations/${id}/accept`, { method: "POST", body: "{}" }),
+  reject: (id: string) => apiRequest<Quotation>(`/api/v1/quotations/${id}/reject`, { method: "POST", body: "{}" }),
+  cancel: (id: string) => apiRequest<Quotation>(`/api/v1/quotations/${id}/cancel`, { method: "POST", body: "{}" }),
+};
+
+export const salesOrderApi = {
+  list: (params: { q?: string; status?: SalesOrderStatus; customerId?: string; page?: number; size?: number } = {}) =>
+    apiRequest<PageResult<SalesOrder>>(`/api/v1/sales-orders${queryString(params)}`),
+  get: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}`),
+  create: (body: SalesOrderPayload) =>
+    apiRequest<SalesOrder>("/api/v1/sales-orders", { method: "POST", body: JSON.stringify(body) }),
+  fromQuotation: (quotationId: string) =>
+    apiRequest<SalesOrder>(`/api/v1/sales-orders/from-quotation/${quotationId}`, { method: "POST", body: "{}" }),
+  update: (id: string, body: SalesOrderPayload) =>
+    apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  confirm: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/confirm`, { method: "POST", body: "{}" }),
+  process: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/process`, { method: "POST", body: "{}" }),
+  ready: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/ready`, { method: "POST", body: "{}" }),
+  cancel: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/cancel`, { method: "POST", body: "{}" }),
+  convertSale: (id: string) => apiRequest<Sale>(`/api/v1/sales-orders/${id}/convert-sale`, { method: "POST", body: "{}" }),
+};
+
+export const paymentApi = {
+  list: (params: { saleId?: string; salesOrderId?: string; customerId?: string } = {}) =>
+    apiRequest<PaymentRecord[]>(`/api/v1/payments${queryString(params)}`),
+  outstanding: (filter: "OUTSTANDING" | "PAID" | "ALL" = "OUTSTANDING") =>
+    apiRequest<OutstandingRow[]>(`/api/v1/payments/outstanding${queryString({ filter })}`),
+  create: (body: PaymentPayload) =>
+    apiRequest<PaymentRecord>("/api/v1/payments", { method: "POST", body: JSON.stringify(body) }),
+};
+
+export const pipelineApi = {
+  dashboard: () => apiRequest<PipelineDashboard>("/api/v1/pipeline/dashboard"),
+};
+
+export const notificationApi = {
+  list: () => apiRequest<AppNotification[]>("/api/v1/notifications"),
+  unreadCount: () => apiRequest<{ count: number }>("/api/v1/notifications/unread-count"),
+  markRead: (id: string) => apiRequest<void>(`/api/v1/notifications/${id}/read`, { method: "POST", body: "{}" }),
+  markAllRead: () => apiRequest<void>("/api/v1/notifications/read-all", { method: "POST", body: "{}" }),
 };
 
 export const purchaseApi = {

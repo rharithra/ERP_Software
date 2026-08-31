@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/auth-context";
@@ -13,7 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiRequestError, customerApi, type Customer, type CustomerPayload, type CustomerSummary } from "@/lib/api";
+import { ApiRequestError, customerApi, paymentApi, type Customer, type CustomerPayload, type CustomerSummary, type PaymentRecord } from "@/lib/api";
+import { inr } from "@/lib/sale-math";
 
 const emptyForm = {
   name: "",
@@ -38,6 +40,10 @@ export function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detail, setDetail] = useState<Customer | null>(null);
+  const [detailPayments, setDetailPayments] = useState<PaymentRecord[]>([]);
+  const [detailOutstanding, setDetailOutstanding] = useState(0);
+  const [detailPaid, setDetailPaid] = useState(0);
+  const [detailSales, setDetailSales] = useState(0);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
@@ -67,6 +73,24 @@ export function CustomersPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, page]);
+
+  useEffect(() => {
+    if (!detail) {
+      setDetailPayments([]);
+      return;
+    }
+    Promise.all([paymentApi.list({ customerId: detail.id }), paymentApi.outstanding("ALL")])
+      .then(([history, rows]) => {
+        const mine = rows.filter((row) => row.customerId === detail.id);
+        setDetailPayments(history);
+        setDetailOutstanding(mine.reduce((sum, row) => sum + Number(row.outstanding), 0));
+        setDetailPaid(mine.reduce((sum, row) => sum + Number(row.paid), 0));
+        setDetailSales(mine.reduce((sum, row) => sum + Number(row.grandTotal), 0));
+      })
+      .catch(() => {
+        setDetailPayments([]);
+      });
+  }, [detail]);
 
   const emptyCopy = useMemo(() => {
     if (query || status !== "all") {
@@ -157,12 +181,17 @@ export function CustomersPage() {
             Regular buyers for this store. Deactivate instead of deleting. Phone is unique when provided.
           </p>
         </div>
-        {canMutate ? (
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add customer
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/app/outstanding">Outstanding</Link>
           </Button>
-        ) : null}
+          {canMutate ? (
+            <Button onClick={openCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add customer
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -375,24 +404,58 @@ export function CustomersPage() {
             <DialogDescription>{detail?.active ? "Active customer" : "Inactive customer"}</DialogDescription>
           </DialogHeader>
           {detail ? (
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="space-y-4">
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground">Phone</dt>
+                  <dd>{detail.phone ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Email</dt>
+                  <dd>{detail.email ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">GSTIN</dt>
+                  <dd>{detail.gstin ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Total sales</dt>
+                  <dd>{inr(detailSales)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Total paid</dt>
+                  <dd>{inr(detailPaid)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Outstanding</dt>
+                  <dd>{inr(detailOutstanding)}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground">Address</dt>
+                  <dd>{detail.address ?? "—"}</dd>
+                </div>
+              </dl>
               <div>
-                <dt className="text-muted-foreground">Phone</dt>
-                <dd>{detail.phone ?? "—"}</dd>
+                <p className="mb-2 text-sm font-medium">Payment history</p>
+                {detailPayments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {detailPayments.map((payment) => (
+                      <li key={payment.id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+                        <span>
+                          <span className="font-mono text-xs">{payment.paymentNumber}</span>
+                          <span className="ml-2 text-muted-foreground">{payment.paymentMethod}</span>
+                        </span>
+                        <span>
+                          {inr(payment.amount)} · {payment.paymentDate}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <div>
-                <dt className="text-muted-foreground">Email</dt>
-                <dd>{detail.email ?? "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">GSTIN</dt>
-                <dd>{detail.gstin ?? "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-muted-foreground">Address</dt>
-                <dd>{detail.address ?? "—"}</dd>
-              </div>
-            </dl>
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>

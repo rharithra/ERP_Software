@@ -202,7 +202,7 @@ Items snapshot product name, SKU, unit, unit selling price, and GST at save time
 
 Sale-level discount reduces grand total after line GST: `grandTotal = subtotal − discount + taxTotal`. Discount cannot exceed subtotal. The API ignores client-supplied totals.
 
-Payment methods: `CASH`, `UPI`, `CARD`, `OTHER`. Completed sales store `paymentStatus=PAID`. No payment gateways.
+Payment methods: `CASH`, `UPI`, `CARD`, `BANK_TRANSFER`, `OTHER`. POS completion still records a payment for the full grand total (`PAID`). Pipeline sales may be `UNPAID` or `PARTIALLY_PAID` when advances exist. No payment gateways.
 
 ### Completing
 
@@ -218,8 +218,24 @@ Quick Sale and Sales Pipeline are different **entry workflows** into the same un
 
 Recommended `sales_mode` (owner may override): grocery → `QUICK_SALE`; water purifier / furniture → `PIPELINE`; electronics, mobiles, hardware, other → `HYBRID`.
 
-Existing tenants migrate to `OTHER` / `HYBRID`. OWNER updates via `PUT /api/v1/tenant`. MANAGER may still update company identity, not sales configuration. Navigation hides future pipeline items for Quick Sale; Pipeline/Hybrid show Leads/Follow-ups/Quotations/Sales orders as coming soon. Those modules are **not implemented**.
+Existing tenants migrate to `OTHER` / `HYBRID`. OWNER updates via `PUT /api/v1/tenant`. MANAGER may still update company identity, not sales configuration. Navigation hides pipeline CRM for Quick Sale. Pipeline and Hybrid show Leads, Follow-ups, Quotations, Sales orders, Outstanding, and the pipeline board (OWNER/MANAGER). Changing sales mode never deletes data.
 
-## What this repo will not do in M5
+## Sales pipeline & CRM (Milestone 6)
 
-Sales returns, refunds, credit/receivables, coupons, loyalty, payment gateways, thermal printer SDKs, CGST/SGST/IGST split, warehouses, batches, serials, and accounting ledgers stay out until later milestones.
+Leads, follow-ups, quotations, and sales orders are a **workflow**. They feed the existing `SaleService` / invoice / `PaymentService` / `InventoryService`. There is no second sale, invoice, or stock engine.
+
+**Inventory:** quotation, sales order, and advance payment do **not** change stock. Only `SaleService.complete` / `completeConvertedSale` calls `InventoryService.applySale`.
+
+**Numbers:** `LEAD-000001`, `QT-000001`, `SO-000001`, `PAY-000001` via locked per-tenant counters (not max+1).
+
+**Payments:** every rupee is a `payments` row. Advances on a sales order keep the same rows when the order converts (`sale_id` attached). Paid and outstanding are sums, never a lone `advanceAmount` field. Payment amount cannot exceed outstanding.
+
+**Authorization:** CRM (leads through sales orders, pipeline dashboard) is OWNER/MANAGER. CASHIER keeps POS, sales, invoices, and payment recording. Tenant id is taken only from JWT → membership → `TenantContext`. New tables use FORCE RLS.
+
+**APIs:** `/api/v1/leads`, `/follow-ups`, `/quotations`, `/sales-orders`, `/payments`, `/pipeline/dashboard`, `/notifications`, `/tenant/members`.
+
+**UI:** `/app/pipeline`, `/app/leads`, `/app/follow-ups`, `/app/quotations`, `/app/sales-orders`, `/app/outstanding`. In-app notifications only (no email/SMS/WhatsApp).
+
+## What this repo will not do in M6
+
+WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, credit notes, sales returns, refunds, advanced aging.

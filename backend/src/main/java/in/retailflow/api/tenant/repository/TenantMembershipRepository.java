@@ -16,4 +16,7 @@ public interface TenantMembershipRepository extends JpaRepository<TenantMembersh
     @Query("SELECT m FROM TenantMembership m JOIN FETCH m.tenant JOIN FETCH m.user WHERE m.user.id = :userId AND m.tenant.id = :tenantId")
     Optional<TenantMembership> findByUserIdAndTenantId(
             @Param("userId") UUID userId, @Param("tenantId") UUID tenantId);
+
+    @Query("SELECT m FROM TenantMembership m JOIN FETCH m.user WHERE m.tenant.id = :tenantId ORDER BY m.user.fullName")
+    List<TenantMembership> findByTenantIdWithUser(@Param("tenantId") UUID tenantId);
 }

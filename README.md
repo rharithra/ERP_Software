@@ -1,8 +1,8 @@
 # RetailFlow
 
-RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, and general stores.
+RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, electronics, appliances, and general stores.
 
-Milestones 1–5 are complete:
+Milestones 1–6 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
@@ -11,11 +11,12 @@ Milestones 1–5 are complete:
 - inventory balances, opening stock, adjustments, and movement history
 - suppliers, draft purchases, goods receiving, and PURCHASE_RECEIPT stock movements
 - customers, POS/sales, SALE stock movements, and printable invoices
-- tenant business type and sales experience (Quick Sale / Pipeline / Hybrid) as navigation configuration
+- tenant business type and sales experience (Quick Sale / Pipeline / Hybrid)
+- sales pipeline CRM: leads, follow-ups, quotations, sales orders, payments, outstanding
 
-Remaining modules stay coming-soon (reports, expenses, employees, leads/quotations).
+Remaining modules stay coming-soon (reports, expenses, employees).
 
-Sales Pipeline modules such as Leads, Follow-ups, Quotations and Sales Orders are NOT implemented in this milestone.
+There is one Sale engine and one inventory ledger. Quotations and sales orders never decrease stock; completing a sale does.
 
 ## Architecture
 
@@ -115,15 +116,15 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog CRUD/isolation, inventory opening/adjustments, suppliers, purchase receiving, customers, sales completion, SALE movements, and concurrent stock.
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog, inventory, purchases, customers, sales, pipeline CRM, payments, and concurrent stock.
 
 ## Current milestone
 
-**Milestone 5.1 — Business-aware sales foundation**
+**Milestone 6 — Sales pipeline & CRM**
 
-Tenants store business type and sales mode. Onboarding recommends a mode. Owners can change it in Settings. Navigation follows the mode. POS, invoices, and inventory stay the single transaction engine.
+Leads → follow-ups → quotations → sales orders → advance payments → existing Sale/Invoice/Inventory. Quick Sale POS is unchanged.
 
-**Milestone 5**, **Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** are complete.
+**Milestone 5.1**, **Milestone 5**, **Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** remain complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -207,9 +208,38 @@ Sales list query params: `q` (sale or invoice number, customer name), `customerI
 
 UI: `/app/customers`, `/app/sales`, `/app/sales/new` (POS), `/app/sales/:id`, `/app/sales/:id/invoice`.
 
+## Pipeline, payments, notifications (authenticated; tenant from JWT)
+
+CRM writes: OWNER, MANAGER. Payments and outstanding: OWNER, MANAGER, CASHIER.
+
+| Method | Path |
+| --- | --- |
+| GET/POST | `/api/v1/leads` |
+| GET | `/api/v1/leads/board` |
+| GET/PUT | `/api/v1/leads/{id}` |
+| GET | `/api/v1/leads/{id}/activities` |
+| POST | `/api/v1/leads/{id}/status` |
+| POST | `/api/v1/leads/{id}/convert-customer` |
+| GET/POST | `/api/v1/follow-ups` |
+| PUT | `/api/v1/follow-ups/{id}` |
+| POST | `/api/v1/follow-ups/{id}/complete` and `/cancel` |
+| GET/POST | `/api/v1/quotations` |
+| GET/PUT | `/api/v1/quotations/{id}` |
+| POST | `/api/v1/quotations/{id}/send`, `/accept`, `/reject`, `/cancel` |
+| GET/POST | `/api/v1/sales-orders` |
+| POST | `/api/v1/sales-orders/from-quotation/{quotationId}` |
+| POST | `/api/v1/sales-orders/{id}/confirm`, `/process`, `/ready`, `/cancel`, `/convert-sale` |
+| GET/POST | `/api/v1/payments` |
+| GET | `/api/v1/payments/outstanding` |
+| GET | `/api/v1/pipeline/dashboard` |
+| GET | `/api/v1/notifications`, `/notifications/unread-count` |
+| POST | `/api/v1/notifications/{id}/read`, `/notifications/read-all` |
+| GET | `/api/v1/tenant/members` |
+
+UI: `/app/pipeline`, `/app/leads`, `/app/follow-ups`, `/app/quotations`, `/app/sales-orders`, `/app/outstanding`.
+
 ## Later milestones
 
-1. Sales pipeline (leads, follow-ups, quotations, sales orders) feeding the existing sale engine
-2. Purchase returns, sales returns, supplier/customer payments
-3. Reports, expenses, employees, notifications
-4. VPS deployment with Caddy/Nginx
+1. Reports, expenses, employees
+2. Purchase returns, sales returns, credit notes
+3. VPS deployment with Caddy/Nginx

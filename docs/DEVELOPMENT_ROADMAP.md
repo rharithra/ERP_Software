@@ -28,10 +28,14 @@ Customers, POS, GST-aware invoices (invoice = completed sale), SALE stock moveme
 
 Business type and sales mode on the tenant. Recommended sales experience at onboarding. Owner can change it in Settings. Navigation is mode-aware. **Sales Pipeline modules such as Leads, Follow-ups, Quotations and Sales Orders are NOT implemented in this milestone.** Quick Sale and Pipeline remain entry workflows into the same Sale → Invoice → Inventory engine.
 
-## Milestone 6 — Control plane
+## Milestone 6 — Sales pipeline & CRM — COMPLETE
 
-Reports, expenses, employees/invites, notification center.
+Leads, follow-ups, quotations, sales orders, advance/partial payments, outstanding, pipeline board, lead timeline, in-app notifications. Pipeline converts to the existing Sale → Invoice → Inventory path. Quotation/SO/advance do not reduce stock.
 
-## Milestone 7 — Operate
+## Milestone 7 — Control plane
+
+Reports, expenses, employees/invites.
+
+## Milestone 8 — Operate
 
 VPS Docker Compose, Caddy/Nginx TLS, backups, log hygiene.

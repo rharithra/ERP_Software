@@ -102,6 +102,9 @@ public class Sale extends AuditedEntity {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "sales_order_id")
+    private UUID salesOrderId;
+
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
@@ -229,6 +232,21 @@ public class Sale extends AuditedEntity {
         return completedAt;
     }
 
+    public UUID getSalesOrderId() {
+        return salesOrderId;
+    }
+
+    public void setSalesOrderId(UUID salesOrderId) {
+        this.salesOrderId = salesOrderId;
+    }
+
+    public void applyPaymentState(PaymentStatus paymentStatus, PaymentMethod paymentMethod) {
+        this.paymentStatus = paymentStatus;
+        if (paymentMethod != null) {
+            this.paymentMethod = paymentMethod;
+        }
+    }
+
     public UUID getCreatedBy() {
         return createdBy;
     }
@@ -293,7 +311,6 @@ public class Sale extends AuditedEntity {
         this.status = SaleStatus.COMPLETED;
         this.invoiceNumber = invoiceNumber;
         this.paymentMethod = paymentMethod;
-        this.paymentStatus = PaymentStatus.PAID;
         this.completedAt = at;
         this.companyName = companyName;
         this.companyGstin = companyGstin;

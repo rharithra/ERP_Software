@@ -28,6 +28,12 @@ public class TenantController {
         return ApiResponse.ok(tenantService.getCurrent());
     }
 
+    @GetMapping("/members")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
+    public ApiResponse<java.util.List<in.retailflow.api.tenant.dto.TenantMemberResponse>> members() {
+        return ApiResponse.ok(tenantService.listMembers());
+    }
+
     @PutMapping
     @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
     public ApiResponse<TenantResponse> updateTenant(@Valid @RequestBody UpdateTenantRequest request) {

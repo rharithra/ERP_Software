@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { RecordPaymentDialog } from "@/components/payments/record-payment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ApiRequestError, saleApi, type Sale, type SaleStatus } from "@/lib/api";
+import { ApiRequestError, paymentApi, saleApi, type PaymentRecord, type Sale, type SaleStatus } from "@/lib/api";
+import { paymentStatusLabel } from "@/lib/pipeline";
 import { inr } from "@/lib/sale-math";
 
 function statusLabel(status: SaleStatus) {
@@ -20,9 +22,11 @@ export function SaleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [sale, setSale] = useState<Sale | null>(null);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [working, setWorking] = useState(false);
 
   async function load() {
@@ -30,7 +34,13 @@ export function SaleDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      setSale(await saleApi.get(id));
+      const record = await saleApi.get(id);
+      setSale(record);
+      if (record.status === "COMPLETED") {
+        setPayments(await paymentApi.list({ saleId: id }));
+      } else {
+        setPayments([]);
+      }
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Unable to load sale");
     } finally {
@@ -80,6 +90,8 @@ export function SaleDetailPage() {
 
   const draft = sale.status === "DRAFT";
   const completed = sale.status === "COMPLETED";
+  const paid = Number(sale.paidAmount ?? 0);
+  const outstanding = Number(sale.outstandingAmount ?? 0);
 
   return (
     <div className="space-y-6">
@@ -102,6 +114,11 @@ export function SaleDetailPage() {
               <Link to={`/app/sales/${sale.id}/invoice`}>Invoice</Link>
             </Button>
           ) : null}
+          {completed && outstanding > 0 ? (
+            <Button variant="outline" onClick={() => setPayOpen(true)}>
+              Record payment
+            </Button>
+          ) : null}
           {draft ? (
             <Button variant="outline" onClick={() => setCancelOpen(true)}>
               Cancel sale
@@ -120,7 +137,7 @@ export function SaleDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Payment</CardDescription>
-            <CardTitle className="text-xl">{sale.paymentMethod ?? "Not paid"}</CardTitle>
+            <CardTitle className="text-xl">{paymentStatusLabel(sale.paymentStatus)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -185,16 +202,79 @@ export function SaleDetailPage() {
       </Card>
 
       {completed ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory posting</CardTitle>
-            <CardDescription>
-              Stock decreased through InventoryService as SALE movements. Reference type SALE, id{" "}
-              <span className="font-mono">{sale.id}</span>.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Invoice total</CardDescription>
+                <CardTitle>{inr(sale.grandTotal)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Paid</CardDescription>
+                <CardTitle>{inr(paid)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Outstanding</CardDescription>
+                <CardTitle>{inr(outstanding)}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment history</CardTitle>
+              <CardDescription>Includes advances collected on a linked sales order.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {payments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No payment rows yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Payment</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell className="font-mono text-xs">{payment.paymentNumber}</TableCell>
+                        <TableCell>{payment.paymentDate}</TableCell>
+                        <TableCell>{payment.paymentMethod}</TableCell>
+                        <TableCell>{inr(payment.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory posting</CardTitle>
+              <CardDescription>
+                Stock decreased through InventoryService as SALE movements. Reference type SALE, id{" "}
+                <span className="font-mono">{sale.id}</span>.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </>
       ) : null}
+
+      <RecordPaymentDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        total={sale.grandTotal}
+        paid={paid}
+        saleId={sale.id}
+        onRecorded={() => void load()}
+      />
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent>

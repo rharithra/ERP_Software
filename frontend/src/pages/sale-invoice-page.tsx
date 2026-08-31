@@ -76,7 +76,9 @@ export function SaleInvoicePage() {
           </div>
           <div className="sm:text-right">
             <p>Payment: {sale.paymentMethod ?? "—"}</p>
-            <p>Status: {sale.paymentStatus ?? "PAID"}</p>
+            <p>Status: {sale.paymentStatus ?? "—"}</p>
+            {sale.paidAmount != null ? <p>Paid: {inr(sale.paidAmount)}</p> : null}
+            {sale.outstandingAmount != null ? <p>Outstanding: {inr(sale.outstandingAmount)}</p> : null}
           </div>
         </section>
         <table className="w-full text-left text-sm">

@@ -30,6 +30,17 @@ public final class ErrorCodes {
     public static final String SALE_NOT_DRAFT = "SALE_NOT_DRAFT";
     public static final String SALE_NOT_COMPLETED = "SALE_NOT_COMPLETED";
     public static final String SALE_EMPTY = "SALE_EMPTY";
+    public static final String INVALID_STATUS = "INVALID_STATUS";
+    public static final String LEAD_NOT_FOUND = "LEAD_NOT_FOUND";
+    public static final String LEAD_ALREADY_CONVERTED = "LEAD_ALREADY_CONVERTED";
+    public static final String FOLLOW_UP_NOT_FOUND = "FOLLOW_UP_NOT_FOUND";
+    public static final String QUOTATION_NOT_FOUND = "QUOTATION_NOT_FOUND";
+    public static final String QUOTATION_NOT_EDITABLE = "QUOTATION_NOT_EDITABLE";
+    public static final String QUOTATION_EXPIRED = "QUOTATION_EXPIRED";
+    public static final String SALES_ORDER_NOT_FOUND = "SALES_ORDER_NOT_FOUND";
+    public static final String SALES_ORDER_NOT_EDITABLE = "SALES_ORDER_NOT_EDITABLE";
+    public static final String PAYMENT_EXCEEDS_OUTSTANDING = "PAYMENT_EXCEEDS_OUTSTANDING";
+    public static final String PAYMENT_NOT_FOUND = "PAYMENT_NOT_FOUND";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}

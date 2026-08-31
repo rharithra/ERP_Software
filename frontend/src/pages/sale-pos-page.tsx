@@ -414,6 +414,7 @@ export function SalePosPage() {
                 <option value="CASH">Cash</option>
                 <option value="UPI">UPI</option>
                 <option value="CARD">Card</option>
+                <option value="BANK_TRANSFER">Bank transfer</option>
                 <option value="OTHER">Other</option>
               </NativeSelect>
             </div>

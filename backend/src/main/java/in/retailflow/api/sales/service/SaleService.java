@@ -58,6 +58,7 @@ public class SaleService {
     private final InventoryService inventoryService;
     private final TenantRepository tenantRepository;
     private final UserAccountRepository userAccountRepository;
+    private final PaymentService paymentService;
 
     public SaleService(
             SaleRepository saleRepository,
@@ -67,7 +68,8 @@ public class SaleService {
             ProductRepository productRepository,
             InventoryService inventoryService,
             TenantRepository tenantRepository,
-            UserAccountRepository userAccountRepository) {
+            UserAccountRepository userAccountRepository,
+            PaymentService paymentService) {
         this.saleRepository = saleRepository;
         this.saleCounterRepository = saleCounterRepository;
         this.invoiceCounterRepository = invoiceCounterRepository;
@@ -76,6 +78,7 @@ public class SaleService {
         this.inventoryService = inventoryService;
         this.tenantRepository = tenantRepository;
         this.userAccountRepository = userAccountRepository;
+        this.paymentService = paymentService;
     }
 
     @Transactional(readOnly = true)
@@ -180,7 +183,66 @@ public class SaleService {
                 tenant.getGstin(),
                 companyAddress(tenant),
                 tenant.getPhone());
+        if (sale.getSalesOrderId() == null) {
+            paymentService.recordPosCompletion(sale, sale.getGrandTotal(), request.paymentMethod(), sale.getSaleDate());
+        } else {
+            paymentService.applySaleTotals(sale);
+        }
         return toResponse(sale, true);
+    }
+
+    @Transactional
+    public Sale createDraftFromOrder(
+            in.retailflow.api.pipeline.domain.SalesOrder order, List<SaleItem> items, java.math.BigDecimal discount) {
+        Tenant tenant = order.getTenant();
+        Sale sale = new Sale(
+                UUID.randomUUID(),
+                tenant,
+                nextSaleNumber(tenant),
+                order.getOrderDate(),
+                order.getNotes(),
+                TenantContext.require().userId());
+        sale.setSalesOrderId(order.getId());
+        sale.assignCustomer(order.getCustomer());
+        sale.replaceItems(items, discount);
+        return saleRepository.save(sale);
+    }
+
+    @Transactional
+    public Sale completeConvertedSale(UUID saleId, in.retailflow.api.pipeline.domain.SalesOrder order) {
+        Sale sale = lockDraft(saleId);
+        if (sale.getItems().isEmpty()) {
+            throw new RetailflowException(
+                    ErrorCodes.SALE_EMPTY, "Add at least one product before completing this sale", HttpStatus.BAD_REQUEST.value());
+        }
+        sale.recalculateTotals();
+        List<SaleItem> ordered = sale.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .toList();
+        for (SaleItem item : ordered) {
+            inventoryService.applySale(item.getProduct().getId(), item.getQuantity(), sale.getId());
+        }
+        Tenant tenant = sale.getTenant();
+        in.retailflow.api.sales.domain.PaymentMethod method = requestMethodFromOrder(order);
+        sale.markCompleted(
+                nextInvoiceNumber(tenant),
+                method,
+                Instant.now(),
+                companyName(tenant),
+                tenant.getGstin(),
+                companyAddress(tenant),
+                tenant.getPhone());
+        paymentService.attachOrderPaymentsToSale(order, sale);
+        return sale;
+    }
+
+    private in.retailflow.api.sales.domain.PaymentMethod requestMethodFromOrder(
+            in.retailflow.api.pipeline.domain.SalesOrder order) {
+        var payments = paymentService.forOrder(order.getId());
+        if (!payments.isEmpty()) {
+            return payments.getLast().paymentMethod();
+        }
+        return in.retailflow.api.sales.domain.PaymentMethod.CASH;
     }
 
     @Transactional
@@ -342,6 +404,12 @@ public class SaleService {
         List<SaleItemResponse> items =
                 includeItems ? sale.getItems().stream().map(this::toItem).toList() : List.of();
         int itemCount = includeItems ? items.size() : sale.getItemCount();
+        java.math.BigDecimal paid = java.math.BigDecimal.ZERO.setScale(2);
+        java.math.BigDecimal outstanding = sale.getGrandTotal();
+        if (sale.getStatus() == SaleStatus.COMPLETED) {
+            paid = paymentService.paidForSale(sale);
+            outstanding = sale.getGrandTotal().subtract(paid);
+        }
         return new SaleResponse(
                 sale.getId().toString(),
                 sale.getSaleNumber(),
@@ -365,7 +433,10 @@ public class SaleService {
                 sale.getCreatedAt(),
                 sale.getUpdatedAt(),
                 itemCount,
-                items);
+                items,
+                sale.getSalesOrderId() == null ? null : sale.getSalesOrderId().toString(),
+                paid,
+                outstanding);
     }
 
     private SaleItemResponse toItem(SaleItem item) {

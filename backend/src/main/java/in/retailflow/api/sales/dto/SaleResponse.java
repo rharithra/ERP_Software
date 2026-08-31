@@ -31,4 +31,7 @@ public record SaleResponse(
         Instant createdAt,
         Instant updatedAt,
         int itemCount,
-        List<SaleItemResponse> items) {}
+        List<SaleItemResponse> items,
+        String salesOrderId,
+        BigDecimal paidAmount,
+        BigDecimal outstandingAmount) {}

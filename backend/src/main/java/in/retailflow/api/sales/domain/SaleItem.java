@@ -75,13 +75,29 @@ public class SaleItem {
             BigDecimal gstRate,
             BigDecimal discount,
             SaleMoney.LineTotals totals) {
+        this(id, tenant, sale, product, product.getName(), product.getSku(), product.getUnit().name(), quantity, unitPrice, gstRate, discount, totals);
+    }
+
+    public SaleItem(
+            UUID id,
+            Tenant tenant,
+            Sale sale,
+            Product product,
+            String productName,
+            String sku,
+            String unit,
+            BigDecimal quantity,
+            BigDecimal unitPrice,
+            BigDecimal gstRate,
+            BigDecimal discount,
+            SaleMoney.LineTotals totals) {
         this.id = id;
         this.tenant = tenant;
         this.sale = sale;
         this.product = product;
-        this.productName = product.getName();
-        this.sku = product.getSku();
-        this.unit = product.getUnit().name();
+        this.productName = productName;
+        this.sku = sku;
+        this.unit = unit;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.gstRate = gstRate;

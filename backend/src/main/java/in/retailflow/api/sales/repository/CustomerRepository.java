@@ -30,6 +30,8 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
             """)
     boolean existsPhone(@Param("phone") String phone, @Param("excludeId") UUID excludeId);
 
+    java.util.Optional<Customer> findFirstByPhone(String phone);
+
     List<Customer> findByActiveTrueOrderByNameAsc();
 
     @Query(
