@@ -107,12 +107,21 @@ export function AppShell() {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="text-sm font-medium">{user?.fullName}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="mt-1 text-xs font-medium tracking-wide text-muted-foreground">{user?.role}</p>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/app/company">Company profile</Link>
                 </DropdownMenuItem>
+                {user?.role === "OWNER" ? (
+                  <DropdownMenuItem asChild>
+                    <Link to="/app/settings/users">Users & Roles</Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem
                   onClick={() => {
                     logout();

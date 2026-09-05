@@ -41,6 +41,10 @@ public final class ErrorCodes {
     public static final String SALES_ORDER_NOT_EDITABLE = "SALES_ORDER_NOT_EDITABLE";
     public static final String PAYMENT_EXCEEDS_OUTSTANDING = "PAYMENT_EXCEEDS_OUTSTANDING";
     public static final String PAYMENT_NOT_FOUND = "PAYMENT_NOT_FOUND";
+    public static final String ACCOUNT_INACTIVE = "ACCOUNT_INACTIVE";
+    public static final String INVALID_ROLE = "INVALID_ROLE";
+    public static final String CANNOT_MODIFY_OWNER = "CANNOT_MODIFY_OWNER";
+    public static final String CANNOT_MODIFY_SELF = "CANNOT_MODIFY_SELF";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}

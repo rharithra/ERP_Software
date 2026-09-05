@@ -1011,7 +1011,24 @@ OWNER/MANAGER: CRM. CASHIER: POS, sales, invoices, payments as in M5. Tenant id 
 
 ## Out of scope
 
-WhatsApp/email/SMS, payment gateways, customer portal, marketing, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST engine, warehouses, batches, serials, delivery, subscriptions, credit notes, returns, refunds, aging.
+WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, credit notes, sales returns, refunds, advanced aging.
+
+---
+
+# 39. Milestone 7 — User & Role Management (COMPLETE)
+
+Each tenant has exactly one OWNER. The owner creates MANAGER and CASHIER users with a temporary password (no email invites).
+
+Roles are fixed. Authorization is enforced on the API (`@PreAuthorize` plus membership status). Frontend hiding is not sufficient.
+
+Inactive users remain in the table and in historical records; they cannot log in. Role changes apply on the next authenticated request because membership is reloaded from the database.
+
+APIs: `/api/v1/users`. UI: Settings → Users & Roles.
+
+## Out of scope for M7
+
+Billing, custom roles, multiple owners, owner transfer, email invitations, OTP/forgot-password email, payroll/HR, multi-company switching.
+
 
 
 

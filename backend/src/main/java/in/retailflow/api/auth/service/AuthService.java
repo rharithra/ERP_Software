@@ -111,7 +111,13 @@ public class AuthService {
         if (memberships.isEmpty()) {
             throw invalidCredentials();
         }
-        TenantMembership membership = memberships.getFirst();
+        TenantMembership membership = memberships.stream()
+                .filter(TenantMembership::isActive)
+                .findFirst()
+                .orElseThrow(() -> new RetailflowException(
+                        ErrorCodes.ACCOUNT_INACTIVE,
+                        "This account is inactive. Ask the owner to reactivate it.",
+                        HttpStatus.UNAUTHORIZED.value()));
         return toAuthResponse(user, membership.getTenant(), membership.getRole());
     }
 

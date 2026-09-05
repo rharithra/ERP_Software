@@ -1,6 +1,7 @@
 package in.retailflow.api.tenant.domain;
 
 import in.retailflow.api.common.audit.AuditedEntity;
+import in.retailflow.api.identity.domain.MembershipStatus;
 import in.retailflow.api.identity.domain.TenantRole;
 import in.retailflow.api.identity.domain.UserAccount;
 import jakarta.persistence.Column;
@@ -35,6 +36,10 @@ public class TenantMembership extends AuditedEntity {
     @Column(nullable = false, length = 32)
     private TenantRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private MembershipStatus status = MembershipStatus.ACTIVE;
+
     protected TenantMembership() {}
 
     public TenantMembership(UUID id, Tenant tenant, UserAccount user, TenantRole role) {
@@ -42,6 +47,7 @@ public class TenantMembership extends AuditedEntity {
         this.tenant = tenant;
         this.user = user;
         this.role = role;
+        this.status = MembershipStatus.ACTIVE;
     }
 
     public UUID getId() {
@@ -58,5 +64,21 @@ public class TenantMembership extends AuditedEntity {
 
     public TenantRole getRole() {
         return role;
+    }
+
+    public void setRole(TenantRole role) {
+        this.role = role;
+    }
+
+    public MembershipStatus getStatus() {
+        return status;
+    }
+
+    public boolean isActive() {
+        return status == MembershipStatus.ACTIVE;
+    }
+
+    public void setStatus(MembershipStatus status) {
+        this.status = status;
     }
 }

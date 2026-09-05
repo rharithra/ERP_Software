@@ -35,6 +35,7 @@ import { SalesOrderFormPage } from "@/pages/sales-order-form-page";
 import { SalesOrdersPage } from "@/pages/sales-orders-page";
 import { SalesPage } from "@/pages/sales-page";
 import { SettingsPage } from "@/pages/settings-page";
+import { UsersPage } from "@/pages/users-page";
 import { SignupPage } from "@/pages/signup-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 
@@ -97,6 +98,7 @@ export default function App() {
                   <Route path="sales-orders/:id" element={<SalesOrderDetailPage />} />
                   <Route path="outstanding" element={<OutstandingPage />} />
                   <Route path="settings" element={<SettingsPage />} />
+                  <Route path="settings/users" element={<UsersPage />} />
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

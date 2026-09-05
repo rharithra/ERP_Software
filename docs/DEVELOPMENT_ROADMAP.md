@@ -32,10 +32,14 @@ Business type and sales mode on the tenant. Recommended sales experience at onbo
 
 Leads, follow-ups, quotations, sales orders, advance/partial payments, outstanding, pipeline board, lead timeline, in-app notifications. Pipeline converts to the existing Sale → Invoice → Inventory path. Quotation/SO/advance do not reduce stock.
 
-## Milestone 7 — Control plane
+## Milestone 7 — User & role management — COMPLETE
 
-Reports, expenses, employees/invites.
+OWNER creates MANAGER/CASHIER with a temporary password, changes staff roles, activates/deactivates, and resets passwords. One OWNER per tenant. Inactive users cannot log in. JWT still reloads membership from the database so deactivation and role changes apply without a new token. No billing, custom roles, invitations, or owner transfer.
 
-## Milestone 8 — Operate
+## Milestone 8 — Control plane (later)
+
+Reports, expenses, employees/HR.
+
+## Milestone 9 — Operate
 
 VPS Docker Compose, Caddy/Nginx TLS, backups, log hygiene.

@@ -148,6 +148,34 @@ export const tenantApi = {
   members: () => apiRequest<TenantMember[]>("/api/v1/tenant/members"),
 };
 
+export type StaffRole = "MANAGER" | "CASHIER";
+export type MembershipStatus = "ACTIVE" | "INACTIVE";
+
+export type TenantUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: AuthUser["role"];
+  status: MembershipStatus;
+  createdAt: string | null;
+};
+
+export const usersApi = {
+  list: () => apiRequest<TenantUser[]>("/api/v1/users"),
+  get: (id: string) => apiRequest<TenantUser>(`/api/v1/users/${id}`),
+  create: (body: { fullName: string; email: string; role: StaffRole; temporaryPassword: string }) =>
+    apiRequest<TenantUser>("/api/v1/users", { method: "POST", body: JSON.stringify(body) }),
+  changeRole: (id: string, role: StaffRole) =>
+    apiRequest<TenantUser>(`/api/v1/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
+  changeStatus: (id: string, status: MembershipStatus) =>
+    apiRequest<TenantUser>(`/api/v1/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  resetPassword: (id: string, temporaryPassword: string) =>
+    apiRequest<null>(`/api/v1/users/${id}/reset-password`, {
+      method: "POST",
+      body: JSON.stringify({ temporaryPassword }),
+    }),
+};
+
 export type Category = {
   id: string;
   name: string;

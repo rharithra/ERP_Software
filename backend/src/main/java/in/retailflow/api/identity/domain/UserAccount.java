@@ -44,6 +44,10 @@ public class UserAccount extends AuditedEntity {
         return passwordHash;
     }
 
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public String getFullName() {
         return fullName;
     }

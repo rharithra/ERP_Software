@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -160,6 +161,20 @@ export function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      {canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Users & Roles</CardTitle>
+            <CardDescription>Invite is not used. Create managers and cashiers with a temporary password.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link to="/app/settings/users">Manage users</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>

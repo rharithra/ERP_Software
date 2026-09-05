@@ -41,7 +41,7 @@ The API never trusts a tenant id from the request body. After signature verifica
 Defense in depth:
 
 1. **Application** — `TenantContext` ThreadLocal from the JWT membership (never from query/body/path). Hibernate filter `tenantFilter` restricts tenant-owned rows.
-2. **Database** — `FORCE ROW LEVEL SECURITY` on `tenants`, `tenant_memberships`, `categories`, `products`, `inventory_balances`, `stock_movements`, `suppliers`, `purchase_number_counters`, `purchases`, and `purchase_items`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
+2. **Database** — `FORCE ROW LEVEL SECURITY` on tenant-owned tables including `tenants`, `tenant_memberships`, catalog, inventory, procurement, sales, pipeline, payments, notifications, and `user_management_events`. Policies allow a row only when `app.current_tenant_id` matches, unless `app.bypass_rls` is `on` for bootstrap/auth lookups.
 
 Tenant binding is **always on** for each new Spring transaction:
 
@@ -65,7 +65,7 @@ Method security:
 - Inventory reads — OWNER, MANAGER, CASHIER
 - Inventory opening stock, adjustments, reorder level — OWNER, MANAGER
 
-MANAGER is not creatable through signup or the UI in Milestone 1. Automated tests insert a MANAGER membership with SQL. There is no invitation flow.
+MANAGER is created by the OWNER from Users & Roles (Milestone 7). Signup still creates only OWNER. There is no email invitation flow.
 
 Unauthenticated callers receive `401` with the standard error envelope. Forbidden callers receive `403`.
 
@@ -236,6 +236,12 @@ Leads, follow-ups, quotations, and sales orders are a **workflow**. They feed th
 
 **UI:** `/app/pipeline`, `/app/leads`, `/app/follow-ups`, `/app/quotations`, `/app/sales-orders`, `/app/outstanding`. In-app notifications only (no email/SMS/WhatsApp).
 
-## What this repo will not do in M6
+## User & role management (Milestone 7)
+
+Fixed roles only. OWNER manages MANAGER/CASHIER for the current tenant. Membership `status` (`ACTIVE`/`INACTIVE`) gates login and JWT membership reload. Audit events live in `user_management_events` (not the lead timeline). APIs: `/api/v1/users`. UI: `/app/settings/users`. See [docs/M7_USER_AND_ROLE_MANAGEMENT.md](docs/M7_USER_AND_ROLE_MANAGEMENT.md).
+
+## What this repo will not do in M7
+
+Subscription billing, per-user pricing, Stripe/Razorpay, plan limits, custom roles, multiple owners, owner transfer, email invitations, forgot-password email, OTP, payroll, attendance, HR, leave, advanced audit platforms, multi-company switching.
 
 WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, credit notes, sales returns, refunds, advanced aging.

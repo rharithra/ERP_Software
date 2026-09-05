@@ -7,6 +7,7 @@ import in.retailflow.api.security.tenant.TenantContext;
 import in.retailflow.api.tenant.domain.BusinessType;
 import in.retailflow.api.tenant.domain.SalesMode;
 import in.retailflow.api.tenant.domain.Tenant;
+import in.retailflow.api.tenant.domain.TenantMembership;
 import in.retailflow.api.tenant.dto.TenantMemberResponse;
 import in.retailflow.api.tenant.dto.TenantResponse;
 import in.retailflow.api.tenant.dto.UpdateTenantRequest;
@@ -32,6 +33,7 @@ public class TenantService {
     @Transactional(readOnly = true)
     public List<TenantMemberResponse> listMembers() {
         return membershipRepository.findByTenantIdWithUser(TenantContext.requireTenantId()).stream()
+                .filter(TenantMembership::isActive)
                 .map(m -> new TenantMemberResponse(
                         m.getUser().getId().toString(),
                         m.getUser().getFullName(),

@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   Store,
   Truck,
+  UserCog,
   Users,
   Wallet,
   type LucideIcon,
@@ -28,6 +29,7 @@ export type NavItem = {
   icon: LucideIcon;
   available: boolean;
   pipeline?: boolean;
+  ownerOnly?: boolean;
 };
 
 const CORE_ITEMS: NavItem[] = [
@@ -44,6 +46,7 @@ const CORE_ITEMS: NavItem[] = [
   { label: "Employees", to: "/app/employees", icon: Users, available: false },
   { label: "Company", to: "/app/company", icon: Store, available: true },
   { label: "Settings", to: "/app/settings", icon: Settings, available: true },
+  { label: "Users & Roles", to: "/app/settings/users", icon: UserCog, available: true, ownerOnly: true },
 ];
 
 const PIPELINE_ITEMS: NavItem[] = [
@@ -89,7 +92,9 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
 export function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
   const crm = user?.role === "OWNER" || user?.role === "MANAGER";
-  const items = navItemsFor(user?.tenant.salesMode).filter((item) => !item.pipeline || crm);
+  const items = navItemsFor(user?.tenant.salesMode).filter(
+    (item) => (!item.pipeline || crm) && (!item.ownerOnly || user?.role === "OWNER"),
+  );
   return (
     <nav className="flex flex-col gap-1 px-3">
       {items.map((item) => {

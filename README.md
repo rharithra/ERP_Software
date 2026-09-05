@@ -2,7 +2,7 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, electronics, appliances, and general stores.
 
-Milestones 1–6 are complete:
+Milestones 1–7 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
@@ -13,8 +13,9 @@ Milestones 1–6 are complete:
 - customers, POS/sales, SALE stock movements, and printable invoices
 - tenant business type and sales experience (Quick Sale / Pipeline / Hybrid)
 - sales pipeline CRM: leads, follow-ups, quotations, sales orders, payments, outstanding
+- owner-managed users and roles (OWNER / MANAGER / CASHIER, activate/deactivate, password reset)
 
-Remaining modules stay coming-soon (reports, expenses, employees).
+Remaining modules stay coming-soon (reports, expenses, employees/HR).
 
 There is one Sale engine and one inventory ledger. Quotations and sales orders never decrease stock; completing a sale does.
 
@@ -94,7 +95,7 @@ Do not commit real secrets. Runtime Docker verification must be done on a machin
 
 `mvn spring-boot:run` with profile `local` still works without `JWT_SECRET` and uses a **development-only** default documented in `application.yml`. Never use that value on a VPS.
 
-MANAGER is a valid API role for company profile GET/PUT, but Milestone 1 signup and UI only create OWNER. There is no manager invitation flow.
+MANAGER may update company identity (name/address) via `PUT /api/v1/tenant`. Only OWNER may change business type or sales mode. OWNER creates MANAGER and CASHIER accounts from Users & Roles. There is no email invitation flow.
 
 ## Environment variables
 
@@ -116,15 +117,15 @@ cd backend && mvn test
 cd frontend && npm test && npm run build
 ```
 
-Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog, inventory, purchases, customers, sales, pipeline CRM, payments, and concurrent stock.
+Backend tests cover password hashing, JWT claims, signup/login, authorization, tenant isolation (including RLS), catalog, inventory, purchases, customers, sales, pipeline CRM, payments, concurrent stock, and user/role management.
 
 ## Current milestone
 
-**Milestone 6 — Sales pipeline & CRM**
+**Milestone 7 — User & role management**
 
-Leads → follow-ups → quotations → sales orders → advance payments → existing Sale/Invoice/Inventory. Quick Sale POS is unchanged.
+OWNER manages MANAGER/CASHIER for the current tenant. See [docs/M7_USER_AND_ROLE_MANAGEMENT.md](docs/M7_USER_AND_ROLE_MANAGEMENT.md).
 
-**Milestone 5.1**, **Milestone 5**, **Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** remain complete.
+**Milestone 6 — Sales pipeline & CRM**, **Milestone 5.1**, **Milestone 5**, **Milestone 1**, **Milestone 1 Hardening**, **Milestone 2**, **Milestone 3**, and **Milestone 4** remain complete.
 
 ## Catalog API (authenticated; tenant from JWT)
 
@@ -238,8 +239,23 @@ CRM writes: OWNER, MANAGER. Payments and outstanding: OWNER, MANAGER, CASHIER.
 
 UI: `/app/pipeline`, `/app/leads`, `/app/follow-ups`, `/app/quotations`, `/app/sales-orders`, `/app/outstanding`.
 
+## Users & roles (authenticated; tenant from JWT)
+
+OWNER only. Email uniqueness is global. Temporary passwords are hashed. Status is membership `ACTIVE` / `INACTIVE`.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/v1/users` | List tenant members including inactive |
+| GET | `/api/v1/users/{id}` | |
+| POST | `/api/v1/users` | MANAGER or CASHIER + temporary password |
+| PATCH | `/api/v1/users/{id}/role` | MANAGER ↔ CASHIER |
+| PATCH | `/api/v1/users/{id}/status` | ACTIVE / INACTIVE |
+| POST | `/api/v1/users/{id}/reset-password` | |
+
+UI: `/app/settings/users`.
+
 ## Later milestones
 
-1. Reports, expenses, employees
+1. Reports, expenses, employees/HR
 2. Purchase returns, sales returns, credit notes
 3. VPS deployment with Caddy/Nginx

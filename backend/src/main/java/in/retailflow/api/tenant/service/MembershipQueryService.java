@@ -20,6 +20,6 @@ public class MembershipQueryService {
     @TenantBypass
     @Transactional(readOnly = true)
     public Optional<TenantMembership> findActiveMembership(UUID userId, UUID tenantId) {
-        return membershipRepository.findByUserIdAndTenantId(userId, tenantId);
+        return membershipRepository.findByUserIdAndTenantId(userId, tenantId).filter(TenantMembership::isActive);
     }
 }
