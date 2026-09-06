@@ -2,7 +2,7 @@
 
 RetailFlow is a multi-tenant ERP for Indian retail shops: kirana, garments, mobile, electronics, appliances, and general stores.
 
-Milestones 1–7 are complete:
+Milestones 1–8 are complete:
 
 - company self-signup, JWT login, BCrypt passwords
 - tenant isolation in the API and in PostgreSQL row-level security (Hibernate filter + FORCE RLS)
@@ -14,6 +14,7 @@ Milestones 1–7 are complete:
 - tenant business type and sales experience (Quick Sale / Pipeline / Hybrid)
 - sales pipeline CRM: leads, follow-ups, quotations, sales orders, payments, outstanding
 - owner-managed users and roles (OWNER / MANAGER / CASHIER, activate/deactivate, password reset)
+- sale returns, refunds, customer credit ledger, and receivable recalculation after returns
 
 Remaining modules stay coming-soon (reports, expenses, employees/HR).
 
@@ -203,11 +204,12 @@ Signup and `PUT /api/v1/tenant` accept `businessType` and `salesMode`. Reads: OW
 | POST | `/api/v1/sales` | OWNER, MANAGER, CASHIER |
 | PUT | `/api/v1/sales/{id}` | OWNER, MANAGER, CASHIER |
 | POST | `/api/v1/sales/{id}/complete` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/sales/{id}/apply-credit` | OWNER, MANAGER, CASHIER |
 | POST | `/api/v1/sales/{id}/cancel` | OWNER, MANAGER, CASHIER |
 
 Sales list query params: `q` (sale or invoice number, customer name), `customerId`, `status` (`DRAFT` / `COMPLETED` / `CANCELLED`), `fromDate`, `toDate`, `page`, `size`. Completing is atomic and posts through `InventoryService.applySale`. Invoice numbers are allocated on complete. Tenant id in query/body/path is ignored.
 
-UI: `/app/customers`, `/app/sales`, `/app/sales/new` (POS), `/app/sales/:id`, `/app/sales/:id/invoice`.
+UI: `/app/customers`, `/app/sales`, `/app/sales/new` (POS), `/app/sales/:id`, `/app/sales/:id/invoice`, `/app/returns`.
 
 ## Pipeline, payments, notifications (authenticated; tenant from JWT)
 
@@ -254,8 +256,21 @@ OWNER only. Email uniqueness is global. Temporary passwords are hashed. Status i
 
 UI: `/app/settings/users`.
 
+## Returns, refunds, and credit (authenticated; tenant from JWT)
+
+Returns and refunds are new documents on the existing Sale / Payment / Inventory engines. See [docs/M8_RETURNS_REFUNDS_AND_CREDIT.md](docs/M8_RETURNS_REFUNDS_AND_CREDIT.md).
+
+| Method | Path | Roles |
+| --- | --- | --- |
+| GET/POST | `/api/v1/returns` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/returns/{id}/complete`, `/cancel` | OWNER, MANAGER, CASHIER |
+| GET/POST | `/api/v1/refunds` | OWNER, MANAGER, CASHIER |
+| POST | `/api/v1/refunds/{id}/complete` | OWNER, MANAGER |
+| POST | `/api/v1/refunds/{id}/cancel` | OWNER, MANAGER, CASHIER |
+| GET | `/api/v1/customers/{id}/credit`, `/credit-transactions`, `/financial`, `/returns`, `/refunds` | OWNER, MANAGER, CASHIER |
+
 ## Later milestones
 
 1. Reports, expenses, employees/HR
-2. Purchase returns, sales returns, credit notes
+2. GST credit notes, purchase returns, damaged inventory
 3. VPS deployment with Caddy/Nginx

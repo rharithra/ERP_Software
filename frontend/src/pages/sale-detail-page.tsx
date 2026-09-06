@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ApiRequestError, paymentApi, saleApi, type PaymentRecord, type Sale, type SaleStatus } from "@/lib/api";
+import { ApiRequestError, paymentApi, refundApi, returnApi, saleApi, type PaymentRecord, type RefundRecord, type Sale, type SaleReturn, type SaleStatus } from "@/lib/api";
 import { paymentStatusLabel } from "@/lib/pipeline";
 import { inr } from "@/lib/sale-math";
 
@@ -23,6 +23,8 @@ export function SaleDetailPage() {
   const navigate = useNavigate();
   const [sale, setSale] = useState<Sale | null>(null);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [returns, setReturns] = useState<SaleReturn[]>([]);
+  const [refunds, setRefunds] = useState<RefundRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -37,9 +39,18 @@ export function SaleDetailPage() {
       const record = await saleApi.get(id);
       setSale(record);
       if (record.status === "COMPLETED") {
-        setPayments(await paymentApi.list({ saleId: id }));
+        const [history, ret, ref] = await Promise.all([
+          paymentApi.list({ saleId: id }),
+          returnApi.list({ saleId: id, size: 50 }),
+          refundApi.list({ saleId: id }),
+        ]);
+        setPayments(history);
+        setReturns(ret.items);
+        setRefunds(ref);
       } else {
         setPayments([]);
+        setReturns([]);
+        setRefunds([]);
       }
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Unable to load sale");
@@ -90,8 +101,12 @@ export function SaleDetailPage() {
 
   const draft = sale.status === "DRAFT";
   const completed = sale.status === "COMPLETED";
-  const paid = Number(sale.paidAmount ?? 0);
+  const paid = Number(sale.actualPaidAmount ?? sale.paidAmount ?? 0);
   const outstanding = Number(sale.outstandingAmount ?? 0);
+  const credit = Number(sale.customerCreditAmount ?? 0);
+  const applied = Number(sale.customerCreditApplied ?? 0);
+  const net = Number(sale.netSaleAmount ?? sale.grandTotal);
+  const canReturn = completed && sale.items.some((item) => Number(item.availableToReturn ?? item.quantity) > 0);
 
   return (
     <div className="space-y-6">
@@ -112,6 +127,11 @@ export function SaleDetailPage() {
           {completed ? (
             <Button asChild>
               <Link to={`/app/sales/${sale.id}/invoice`}>Invoice</Link>
+            </Button>
+          ) : null}
+          {canReturn ? (
+            <Button variant="outline" asChild>
+              <Link to={`/app/returns/new?saleId=${sale.id}`}>Create return</Link>
             </Button>
           ) : null}
           {completed && outstanding > 0 ? (
@@ -203,16 +223,22 @@ export function SaleDetailPage() {
 
       {completed ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Invoice total</CardDescription>
-                <CardTitle>{inr(sale.grandTotal)}</CardTitle>
+                <CardDescription>Original total</CardDescription>
+                <CardTitle>{inr(sale.originalTotal ?? sale.grandTotal)}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Paid</CardDescription>
+                <CardDescription>Net sale</CardDescription>
+                <CardTitle>{inr(net)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Actual paid</CardDescription>
                 <CardTitle>{inr(paid)}</CardTitle>
               </CardHeader>
             </Card>
@@ -220,6 +246,30 @@ export function SaleDetailPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Outstanding</CardDescription>
                 <CardTitle>{inr(outstanding)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Credit applied</CardDescription>
+                <CardTitle>{inr(applied)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Customer credit</CardDescription>
+                <CardTitle>{inr(credit)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Returns</CardDescription>
+                <CardTitle>{inr(sale.completedReturnAmount ?? 0)}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Return status</CardDescription>
+                <CardTitle className="text-xl">{sale.returnStatus ?? "NONE"}</CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -257,6 +307,73 @@ export function SaleDetailPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle>Returns</CardTitle>
+              <CardDescription>Returns are separate documents. The original sale lines were not modified.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {returns.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No returns on this sale.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Return</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {returns.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <Link className="font-mono text-xs text-primary" to={`/app/returns/${row.id}`}>
+                            {row.returnNumber}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{row.returnDate}</TableCell>
+                        <TableCell>{inr(row.totalAmount)}</TableCell>
+                        <TableCell>{row.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Refunds</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {refunds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No refunds. Overpaid amounts stay as customer credit until refunded or applied.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Refund</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {refunds.map((refund) => (
+                      <TableRow key={refund.id}>
+                        <TableCell className="font-mono text-xs">{refund.refundNumber}</TableCell>
+                        <TableCell>{inr(refund.amount)}</TableCell>
+                        <TableCell>{refund.paymentMethod}</TableCell>
+                        <TableCell>{refund.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Inventory posting</CardTitle>
               <CardDescription>
                 Stock decreased through InventoryService as SALE movements. Reference type SALE, id{" "}
@@ -270,8 +387,8 @@ export function SaleDetailPage() {
       <RecordPaymentDialog
         open={payOpen}
         onOpenChange={setPayOpen}
-        total={sale.grandTotal}
-        paid={paid}
+        total={net}
+        paid={paid + applied}
         saleId={sale.id}
         onRecorded={() => void load()}
       />

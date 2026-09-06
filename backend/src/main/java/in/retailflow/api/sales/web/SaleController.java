@@ -3,6 +3,7 @@ package in.retailflow.api.sales.web;
 import in.retailflow.api.common.api.ApiResponse;
 import in.retailflow.api.common.api.PageResponse;
 import in.retailflow.api.sales.domain.SaleStatus;
+import in.retailflow.api.sales.dto.ApplyCreditRequest;
 import in.retailflow.api.sales.dto.CompleteSaleRequest;
 import in.retailflow.api.sales.dto.SaleDashboardResponse;
 import in.retailflow.api.sales.dto.SaleInvoiceResponse;
@@ -91,6 +92,13 @@ public class SaleController {
     public ApiResponse<SaleResponse> complete(
             @PathVariable UUID id, @Valid @RequestBody CompleteSaleRequest request) {
         return ApiResponse.ok(saleService.complete(id, request));
+    }
+
+    @PostMapping("/{id}/apply-credit")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<SaleResponse> applyCredit(
+            @PathVariable UUID id, @Valid @RequestBody ApplyCreditRequest request) {
+        return ApiResponse.ok(saleService.applyCredit(id, request));
     }
 
     @PostMapping("/{id}/cancel")

@@ -2,6 +2,7 @@ package in.retailflow.api.sales.dto;
 
 import in.retailflow.api.sales.domain.PaymentMethod;
 import in.retailflow.api.sales.domain.PaymentStatus;
+import in.retailflow.api.sales.domain.ReturnStatusSummary;
 import in.retailflow.api.sales.domain.SaleStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,4 +35,11 @@ public record SaleResponse(
         List<SaleItemResponse> items,
         String salesOrderId,
         BigDecimal paidAmount,
-        BigDecimal outstandingAmount) {}
+        BigDecimal outstandingAmount,
+        BigDecimal originalTotal,
+        BigDecimal completedReturnAmount,
+        BigDecimal netSaleAmount,
+        BigDecimal actualPaidAmount,
+        BigDecimal customerCreditApplied,
+        BigDecimal customerCreditAmount,
+        ReturnStatusSummary returnStatus) {}

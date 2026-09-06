@@ -17,6 +17,8 @@ public enum Permission {
     CUSTOMER_CREATE,
     SALE_CREATE,
     PAYMENT_RECORD,
+    RETURN_MANAGE,
+    REFUND_MANAGE,
     LEAD_MANAGE,
     QUOTATION_MANAGE,
     SALES_ORDER_MANAGE,
@@ -38,12 +40,14 @@ public enum Permission {
                     CUSTOMER_CREATE,
                     SALE_CREATE,
                     PAYMENT_RECORD,
+                    RETURN_MANAGE,
+                    REFUND_MANAGE,
                     LEAD_MANAGE,
                     QUOTATION_MANAGE,
                     SALES_ORDER_MANAGE,
                     REPORT_VIEW,
                     EXPENSE_MANAGE);
-            case CASHIER -> EnumSet.of(SALE_CREATE, PAYMENT_RECORD);
+            case CASHIER -> EnumSet.of(SALE_CREATE, PAYMENT_RECORD, RETURN_MANAGE);
         };
     }
 }

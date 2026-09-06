@@ -36,10 +36,14 @@ Leads, follow-ups, quotations, sales orders, advance/partial payments, outstandi
 
 OWNER creates MANAGER/CASHIER with a temporary password, changes staff roles, activates/deactivates, and resets passwords. One OWNER per tenant. Inactive users cannot log in. JWT still reloads membership from the database so deactivation and role changes apply without a new token. No billing, custom roles, invitations, or owner transfer.
 
-## Milestone 8 — Control plane (later)
+## Milestone 8 — Returns, refunds & customer credit — COMPLETE
+
+Sale returns as separate documents (`RET-000001`), inventory restock only on complete via `InventoryService` (`SALE_RETURN`), receivable/credit from `SaleSettlementService`, customer credit ledger, explicit refunds (`REF-000001`). POS and pipeline sales share this return engine. GST credit notes and damaged-stock workflows are later.
+
+## Milestone 9 — Control plane (later)
 
 Reports, expenses, employees/HR.
 
-## Milestone 9 — Operate
+## Milestone 10 — Operate
 
 VPS Docker Compose, Caddy/Nginx TLS, backups, log hygiene.

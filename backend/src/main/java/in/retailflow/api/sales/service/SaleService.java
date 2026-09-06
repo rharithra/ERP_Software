@@ -17,6 +17,7 @@ import in.retailflow.api.sales.domain.SaleItem;
 import in.retailflow.api.sales.domain.SaleMoney;
 import in.retailflow.api.sales.domain.SaleNumberCounter;
 import in.retailflow.api.sales.domain.SaleStatus;
+import in.retailflow.api.sales.dto.ApplyCreditRequest;
 import in.retailflow.api.sales.dto.CompleteSaleRequest;
 import in.retailflow.api.sales.dto.SaleDashboardResponse;
 import in.retailflow.api.sales.dto.SaleInvoiceResponse;
@@ -28,6 +29,7 @@ import in.retailflow.api.sales.dto.SaleSummaryResponse;
 import in.retailflow.api.sales.repository.InvoiceNumberCounterRepository;
 import in.retailflow.api.sales.repository.SaleNumberCounterRepository;
 import in.retailflow.api.sales.repository.SaleRepository;
+import in.retailflow.api.sales.repository.SaleReturnRepository;
 import in.retailflow.api.security.tenant.TenantContext;
 import in.retailflow.api.tenant.domain.Tenant;
 import in.retailflow.api.tenant.repository.TenantRepository;
@@ -59,6 +61,9 @@ public class SaleService {
     private final TenantRepository tenantRepository;
     private final UserAccountRepository userAccountRepository;
     private final PaymentService paymentService;
+    private final SaleSettlementService settlementService;
+    private final CustomerCreditService creditService;
+    private final SaleReturnRepository returnRepository;
 
     public SaleService(
             SaleRepository saleRepository,
@@ -69,7 +74,10 @@ public class SaleService {
             InventoryService inventoryService,
             TenantRepository tenantRepository,
             UserAccountRepository userAccountRepository,
-            PaymentService paymentService) {
+            PaymentService paymentService,
+            SaleSettlementService settlementService,
+            CustomerCreditService creditService,
+            SaleReturnRepository returnRepository) {
         this.saleRepository = saleRepository;
         this.saleCounterRepository = saleCounterRepository;
         this.invoiceCounterRepository = invoiceCounterRepository;
@@ -79,6 +87,9 @@ public class SaleService {
         this.tenantRepository = tenantRepository;
         this.userAccountRepository = userAccountRepository;
         this.paymentService = paymentService;
+        this.settlementService = settlementService;
+        this.creditService = creditService;
+        this.returnRepository = returnRepository;
     }
 
     @Transactional(readOnly = true)
@@ -109,7 +120,23 @@ public class SaleService {
         List<SaleResponse> recent = saleRepository.findRecentCompleted(PageRequest.of(0, 5)).stream()
                 .map(sale -> toResponse(sale, false))
                 .toList();
-        return new SaleDashboardResponse(asLong(values[0]), asMoney(values[1]), recent);
+        Object[] returns = returnRepository.summarizeCompletedOn(today);
+        Object[] returnValues =
+                returns.length >= 2 && !(returns[0] instanceof Object[]) ? returns : (Object[]) returns[0];
+        BigDecimal outstanding = BigDecimal.ZERO.setScale(2);
+        for (Sale sale : saleRepository.findAll()) {
+            if (sale.getStatus() == SaleStatus.COMPLETED) {
+                outstanding = outstanding.add(settlementService.snapshot(sale).outstandingAmount());
+            }
+        }
+        return new SaleDashboardResponse(
+                asLong(values[0]),
+                asMoney(values[1]),
+                recent,
+                asLong(returnValues[0]),
+                asMoney(returnValues[1]),
+                outstanding,
+                creditService.availableLiability());
     }
 
     @Transactional(readOnly = true)
@@ -184,10 +211,45 @@ public class SaleService {
                 companyAddress(tenant),
                 tenant.getPhone());
         if (sale.getSalesOrderId() == null) {
-            paymentService.recordPosCompletion(sale, sale.getGrandTotal(), request.paymentMethod(), sale.getSaleDate());
+            BigDecimal credit = request.creditAmount() == null
+                    ? BigDecimal.ZERO.setScale(2)
+                    : request.creditAmount().setScale(2, java.math.RoundingMode.HALF_UP);
+            if (credit.compareTo(BigDecimal.ZERO) > 0) {
+                creditService.applyToSale(sale, credit);
+            }
+            BigDecimal remainder = sale.getGrandTotal().subtract(credit);
+            BigDecimal pay = request.paymentAmount() == null
+                    ? remainder
+                    : request.paymentAmount().setScale(2, java.math.RoundingMode.HALF_UP);
+            if (pay.compareTo(remainder) > 0) {
+                throw new RetailflowException(
+                        ErrorCodes.PAYMENT_EXCEEDS_OUTSTANDING,
+                        "Payment cannot exceed the outstanding amount of ₹" + remainder.toPlainString(),
+                        HttpStatus.BAD_REQUEST.value());
+            }
+            if (pay.compareTo(BigDecimal.ZERO) > 0) {
+                paymentService.recordPosCompletion(sale, pay, request.paymentMethod(), sale.getSaleDate());
+            } else {
+                paymentService.applySaleTotals(sale);
+            }
         } else {
             paymentService.applySaleTotals(sale);
         }
+        return toResponse(sale, true);
+    }
+
+    @Transactional
+    public SaleResponse applyCredit(UUID id, ApplyCreditRequest request) {
+        Sale sale = saleRepository
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> new RetailflowException(
+                        ErrorCodes.SALE_NOT_FOUND, "Sale not found", HttpStatus.NOT_FOUND.value()));
+        if (sale.getStatus() != SaleStatus.COMPLETED) {
+            throw new RetailflowException(
+                    ErrorCodes.SALE_NOT_COMPLETED, "Apply credit after the sale is completed", HttpStatus.CONFLICT.value());
+        }
+        creditService.applyToSale(sale, request.amount().setScale(2, java.math.RoundingMode.HALF_UP));
+        paymentService.applySaleTotals(sale);
         return toResponse(sale, true);
     }
 
@@ -406,9 +468,10 @@ public class SaleService {
         int itemCount = includeItems ? items.size() : sale.getItemCount();
         java.math.BigDecimal paid = java.math.BigDecimal.ZERO.setScale(2);
         java.math.BigDecimal outstanding = sale.getGrandTotal();
+        SaleSettlementService.SaleSettlement snap = settlementService.snapshot(sale);
         if (sale.getStatus() == SaleStatus.COMPLETED) {
-            paid = paymentService.paidForSale(sale);
-            outstanding = sale.getGrandTotal().subtract(paid);
+            paid = snap.actualPaidAmount();
+            outstanding = snap.outstandingAmount();
         }
         return new SaleResponse(
                 sale.getId().toString(),
@@ -425,7 +488,7 @@ public class SaleService {
                 sale.getTaxTotal(),
                 sale.getGrandTotal(),
                 sale.getPaymentMethod(),
-                sale.getPaymentStatus(),
+                sale.getStatus() == SaleStatus.COMPLETED ? snap.paymentStatus() : sale.getPaymentStatus(),
                 sale.getNotes(),
                 sale.getCompletedAt(),
                 sale.getCreatedBy().toString(),
@@ -436,10 +499,22 @@ public class SaleService {
                 items,
                 sale.getSalesOrderId() == null ? null : sale.getSalesOrderId().toString(),
                 paid,
-                outstanding);
+                outstanding,
+                snap.originalTotal(),
+                snap.completedReturnAmount(),
+                snap.netSaleAmount(),
+                snap.actualPaidAmount(),
+                snap.customerCreditApplied(),
+                snap.customerCreditAmount(),
+                snap.returnStatus());
     }
 
     private SaleItemResponse toItem(SaleItem item) {
+        java.math.BigDecimal returned = returnRepository.sumCompletedQuantityForSaleItem(item.getId());
+        if (returned == null) {
+            returned = java.math.BigDecimal.ZERO.setScale(3);
+        }
+        java.math.BigDecimal available = item.getQuantity().subtract(returned);
         return new SaleItemResponse(
                 item.getId().toString(),
                 item.getProduct().getId().toString(),
@@ -452,7 +527,9 @@ public class SaleService {
                 item.getDiscount(),
                 item.getTaxableAmount(),
                 item.getTaxAmount(),
-                item.getLineTotal());
+                item.getLineTotal(),
+                returned,
+                available);
     }
 
     private static BigDecimal saleDiscount(BigDecimal discount) {

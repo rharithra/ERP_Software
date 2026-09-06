@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Package,
   Receipt,
+  RotateCcw,
   Tags,
   Settings,
   ShoppingBag,
@@ -35,6 +36,7 @@ export type NavItem = {
 const CORE_ITEMS: NavItem[] = [
   { label: "Dashboard", to: "/app", icon: LayoutDashboard, available: true },
   { label: "POS / Sales", to: "/app/sales", icon: ShoppingBag, available: true },
+  { label: "Returns", to: "/app/returns", icon: RotateCcw, available: true },
   { label: "Categories", to: "/app/categories", icon: Tags, available: true },
   { label: "Products", to: "/app/products", icon: Package, available: true },
   { label: "Inventory", to: "/app/inventory", icon: Boxes, available: true },

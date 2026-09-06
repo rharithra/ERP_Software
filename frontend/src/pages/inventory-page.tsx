@@ -54,6 +54,7 @@ function movementLabel(type: StockMovement["type"]) {
   if (type === "ADJUSTMENT_IN") return "Stock in";
   if (type === "PURCHASE_RECEIPT") return "Purchase receipt";
   if (type === "SALE") return "Sale";
+  if (type === "SALE_RETURN") return "Sale return";
   return "Stock out";
 }
 

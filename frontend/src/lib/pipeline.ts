@@ -61,6 +61,7 @@ export function paymentStatusLabel(status: PaymentStatus | string | null | undef
   if (status === "PAID") return "Paid";
   if (status === "PARTIALLY_PAID") return "Partially paid";
   if (status === "UNPAID") return "Unpaid";
+  if (status === "REFUND_DUE") return "Refund due";
   return "—";
 }
 

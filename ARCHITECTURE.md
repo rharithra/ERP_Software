@@ -240,8 +240,12 @@ Leads, follow-ups, quotations, and sales orders are a **workflow**. They feed th
 
 Fixed roles only. OWNER manages MANAGER/CASHIER for the current tenant. Membership `status` (`ACTIVE`/`INACTIVE`) gates login and JWT membership reload. Audit events live in `user_management_events` (not the lead timeline). APIs: `/api/v1/users`. UI: `/app/settings/users`. See [docs/M7_USER_AND_ROLE_MANAGEMENT.md](docs/M7_USER_AND_ROLE_MANAGEMENT.md).
 
-## What this repo will not do in M7
+## Returns, refunds, and customer credit (Milestone 8)
 
-Subscription billing, per-user pricing, Stripe/Razorpay, plan limits, custom roles, multiple owners, owner transfer, email invitations, forgot-password email, OTP, payroll, attendance, HR, leave, advanced audit platforms, multi-company switching.
+Sale returns are separate tenant-scoped documents. Completing a return restocks through `InventoryService.applySaleReturn` (`SALE_RETURN`). Receivables use `SaleSettlementService` (net sale after completed returns, actual payments, credit applied). Customer credit is a ledger. Refunds are explicit `refunds` rows. Payment status may be `REFUND_DUE`. See [docs/M8_RETURNS_REFUNDS_AND_CREDIT.md](docs/M8_RETURNS_REFUNDS_AND_CREDIT.md).
 
-WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, credit notes, sales returns, refunds, advanced aging.
+## What this repo will not do yet
+
+Subscription billing, per-user pricing, Stripe/Razorpay, plan limits, custom roles, multiple owners, owner transfer, email invitations, forgot-password email, OTP, payroll, attendance, HR.
+
+GST credit notes / tax-authority filing, payment-gateway refunds, damaged or repair inventory, serials/batches, exchanges, loyalty, GL, aging reports, configurable cashier refund limits, WhatsApp/email/SMS, customer portal.

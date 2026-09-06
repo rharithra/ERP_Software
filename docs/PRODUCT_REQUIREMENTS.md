@@ -1011,7 +1011,7 @@ OWNER/MANAGER: CRM. CASHIER: POS, sales, invoices, payments as in M5. Tenant id 
 
 ## Out of scope
 
-WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, credit notes, sales returns, refunds, advanced aging.
+WhatsApp/email/SMS, payment gateways, customer portal, marketing automation, AI scoring, loyalty, coupons, commissions, GL, CGST/SGST split, warehouses, batches, serials, delivery logistics, subscriptions, GST credit notes, aging reports.
 
 ---
 

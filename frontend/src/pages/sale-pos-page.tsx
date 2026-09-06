@@ -59,10 +59,30 @@ export function SalePosPage() {
   const [customerOpen, setCustomerOpen] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [availableCredit, setAvailableCredit] = useState(0);
+  const [creditAmount, setCreditAmount] = useState("0");
 
   useEffect(() => {
     void bootstrap();
   }, []);
+
+  useEffect(() => {
+    if (!customerId) {
+      setAvailableCredit(0);
+      setCreditAmount("0");
+      return;
+    }
+    customerApi
+      .credit(customerId)
+      .then((credit) => {
+        setAvailableCredit(Number(credit.availableCredit) || 0);
+        setCreditAmount("0");
+      })
+      .catch(() => {
+        setAvailableCredit(0);
+        setCreditAmount("0");
+      });
+  }, [customerId]);
 
   async function bootstrap() {
     setLoading(true);
@@ -202,7 +222,11 @@ export function SalePosPage() {
           gstRate: line.gstRate,
         })),
       });
-      const completed = await saleApi.complete(draft.id, paymentMethod);
+      const credit = Math.min(Number(creditAmount) || 0, availableCredit, totals.grandTotal);
+      const completed =
+        credit > 0
+          ? await saleApi.complete(draft.id, paymentMethod, { creditAmount: credit })
+          : await saleApi.complete(draft.id, paymentMethod);
       toast.success(`Sale ${completed.saleNumber} completed`);
       navigate(`/app/sales/${completed.id}/invoice`);
     } catch (err) {
@@ -404,6 +428,19 @@ export function SalePosPage() {
               <Label htmlFor="discount">Sale discount (₹)</Label>
               <Input id="discount" type="number" min={0} value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </div>
+            {availableCredit > 0 ? (
+              <div className="space-y-2">
+                <Label htmlFor="credit">Apply store credit (available {inr(availableCredit)})</Label>
+                <Input
+                  id="credit"
+                  type="number"
+                  min={0}
+                  max={Math.min(availableCredit, totals.grandTotal)}
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                />
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="payment">Payment method</Label>
               <NativeSelect

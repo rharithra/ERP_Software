@@ -27,6 +27,9 @@ import { PurchasesPage } from "@/pages/purchases-page";
 import { QuotationDetailPage } from "@/pages/quotation-detail-page";
 import { QuotationFormPage } from "@/pages/quotation-form-page";
 import { QuotationsPage } from "@/pages/quotations-page";
+import { ReturnCreatePage } from "@/pages/return-create-page";
+import { ReturnDetailPage } from "@/pages/return-detail-page";
+import { ReturnsPage } from "@/pages/returns-page";
 import { SaleDetailPage } from "@/pages/sale-detail-page";
 import { SaleInvoicePage } from "@/pages/sale-invoice-page";
 import { SalePosPage } from "@/pages/sale-pos-page";
@@ -74,6 +77,9 @@ export default function App() {
                   <Route path="sales/new" element={<SalePosPage />} />
                   <Route path="sales/:id" element={<SaleDetailPage />} />
                   <Route path="sales/:id/invoice" element={<SaleInvoicePage />} />
+                  <Route path="returns" element={<ReturnsPage />} />
+                  <Route path="returns/new" element={<ReturnCreatePage />} />
+                  <Route path="returns/:id" element={<ReturnDetailPage />} />
                   <Route path="products" element={<ProductsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
                   <Route path="customers" element={<CustomersPage />} />

@@ -47,6 +47,7 @@ public class PaymentService {
     private final PipelineSupport support;
     private final LeadService leadService;
     private final NotificationService notificationService;
+    private final SaleSettlementService settlementService;
 
     public PaymentService(
             PaymentRepository paymentRepository,
@@ -56,7 +57,8 @@ public class PaymentService {
             UserAccountRepository userAccountRepository,
             PipelineSupport support,
             LeadService leadService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            SaleSettlementService settlementService) {
         this.paymentRepository = paymentRepository;
         this.counterRepository = counterRepository;
         this.saleRepository = saleRepository;
@@ -65,6 +67,7 @@ public class PaymentService {
         this.support = support;
         this.leadService = leadService;
         this.notificationService = notificationService;
+        this.settlementService = settlementService;
     }
 
     @Transactional(readOnly = true)
@@ -96,9 +99,10 @@ public class PaymentService {
             if (sale.getStatus() != in.retailflow.api.sales.domain.SaleStatus.COMPLETED) {
                 continue;
             }
-            BigDecimal paid = paidForSale(sale);
-            BigDecimal outstanding = sale.getGrandTotal().subtract(paid);
-            PaymentStatus status = statusFor(paid, sale.getGrandTotal());
+            SaleSettlementService.SaleSettlement snap = settlementService.snapshot(sale);
+            BigDecimal paid = snap.actualPaidAmount();
+            BigDecimal outstanding = snap.outstandingAmount();
+            PaymentStatus status = snap.paymentStatus();
             if ("PAID".equals(mode) && outstanding.compareTo(BigDecimal.ZERO) != 0) {
                 continue;
             }
@@ -111,7 +115,7 @@ public class PaymentService {
                     sale.getId().toString(),
                     sale.getInvoiceNumber(),
                     sale.getSaleDate(),
-                    sale.getGrandTotal(),
+                    snap.netSaleAmount(),
                     paid,
                     outstanding,
                     status));
@@ -171,14 +175,13 @@ public class PaymentService {
     }
 
     public void applySaleTotals(Sale sale) {
-        BigDecimal paid = paymentRepository.sumBySaleId(sale.getId());
-        PaymentStatus status = statusFor(paid, sale.getGrandTotal());
+        SaleSettlementService.SaleSettlement snap = settlementService.snapshot(sale);
         PaymentMethod method = sale.getPaymentMethod();
         List<Payment> payments = paymentRepository.findBySaleIdOrderByPaymentDateAscCreatedAtAsc(sale.getId());
         if (!payments.isEmpty()) {
             method = payments.getLast().getPaymentMethod();
         }
-        sale.applyPaymentState(status, method);
+        sale.applyPaymentState(snap.paymentStatus(), method);
     }
 
     private PaymentResponse recordAgainstSale(UUID saleId, PaymentRequest request) {
@@ -190,8 +193,7 @@ public class PaymentService {
             throw new RetailflowException(
                     ErrorCodes.SALE_NOT_COMPLETED, "Record payments against a completed invoice", HttpStatus.CONFLICT.value());
         }
-        BigDecimal paid = paymentRepository.sumBySaleId(sale.getId());
-        BigDecimal outstanding = sale.getGrandTotal().subtract(paid);
+        BigDecimal outstanding = settlementService.snapshot(sale).outstandingAmount();
         BigDecimal amount = request.amount().setScale(2, RoundingMode.UNNECESSARY);
         rejectIfExceeds(amount, outstanding);
         Payment payment = new Payment(
@@ -215,7 +217,7 @@ public class PaymentService {
         paymentRepository.save(payment);
         applySaleTotals(sale);
         notePayment(sale.getSalesOrderId() == null ? null : salesOrderRepository.findById(sale.getSalesOrderId()).orElse(null), amount);
-        if (sale.getGrandTotal().subtract(paymentRepository.sumBySaleId(sale.getId())).compareTo(BigDecimal.ZERO) > 0) {
+        if (settlementService.snapshot(sale).outstandingAmount().compareTo(BigDecimal.ZERO) > 0) {
             notificationService.paymentOutstanding(
                     TenantContext.require().userId(),
                     "Payment outstanding",

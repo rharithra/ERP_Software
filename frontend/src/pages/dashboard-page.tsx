@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IndianRupee, Package, ShoppingCart, TriangleAlert } from "lucide-react";
+import { IndianRupee, ShoppingCart, TriangleAlert, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,13 +79,45 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div>
-              <CardDescription>Catalog</CardDescription>
-              <CardTitle className="mt-2 text-3xl font-semibold">Live</CardTitle>
+              <CardDescription>Today&apos;s returns</CardDescription>
+              <CardTitle className="mt-2 text-3xl font-semibold">
+                {sales ? inr(sales.todayReturnAmount ?? 0) : "—"}
+              </CardTitle>
             </div>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Categories, products, stock, purchases, and POS are live.</p>
+            <p className="text-sm text-muted-foreground">
+              {sales?.todayReturns ?? 0} completed return document{sales?.todayReturns === 1 ? "" : "s"} today.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div>
+              <CardDescription>Outstanding receivables</CardDescription>
+              <CardTitle className="mt-2 text-3xl font-semibold">
+                {sales ? inr(sales.outstandingReceivables ?? 0) : "—"}
+              </CardTitle>
+            </div>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Net sale value still unpaid after returns and credit.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0">
+            <div>
+              <CardDescription>Customer credit liability</CardDescription>
+              <CardTitle className="mt-2 text-3xl font-semibold">
+                {sales ? inr(sales.customerCreditLiability ?? 0) : "—"}
+              </CardTitle>
+            </div>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Store credit on the ledger that has not been refunded or applied.</p>
           </CardContent>
         </Card>
       </div>
@@ -122,6 +154,9 @@ export function DashboardPage() {
             ) : null}
             <Link className="text-sm font-medium text-primary" to="/app/sales">
               Sales history
+            </Link>
+            <Link className="text-sm font-medium text-primary" to="/app/returns">
+              Returns
             </Link>
             <Link className="text-sm font-medium text-primary" to="/app/inventory">
               Open inventory

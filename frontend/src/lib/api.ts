@@ -296,7 +296,8 @@ export type StockMovementType =
   | "ADJUSTMENT_IN"
   | "ADJUSTMENT_OUT"
   | "PURCHASE_RECEIPT"
-  | "SALE";
+  | "SALE"
+  | "SALE_RETURN";
 
 export type StockMovement = {
   id: string;
@@ -490,11 +491,29 @@ export const customerApi = {
       method: "PATCH",
       body: JSON.stringify({ active }),
     }),
+  credit: (id: string) => apiRequest<CustomerCredit>(`/api/v1/customers/${id}/credit`),
+  creditTransactions: (id: string) =>
+    apiRequest<CreditTransaction[]>(`/api/v1/customers/${id}/credit-transactions`),
+  financial: (id: string) => apiRequest<CustomerFinancial>(`/api/v1/customers/${id}/financial`),
+  returns: (id: string) => apiRequest<PageResult<SaleReturn>>(`/api/v1/customers/${id}/returns`),
+  refunds: (id: string) => apiRequest<RefundRecord[]>(`/api/v1/customers/${id}/refunds`),
 };
 
 export type SaleStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
 export type PaymentMethod = "CASH" | "UPI" | "CARD" | "BANK_TRANSFER" | "OTHER";
-export type PaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID";
+export type PaymentStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID" | "REFUND_DUE";
+export type ReturnStatusSummary = "NONE" | "PARTIALLY_RETURNED" | "FULLY_RETURNED";
+export type SaleReturnStatus = "DRAFT" | "COMPLETED" | "CANCELLED";
+export type RefundStatus = "PENDING" | "COMPLETED" | "CANCELLED";
+export type ReturnReason =
+  | "DAMAGED"
+  | "DEFECTIVE"
+  | "WRONG_PRODUCT"
+  | "CUSTOMER_CHANGED_MIND"
+  | "QUALITY_ISSUE"
+  | "NOT_REQUIRED"
+  | "OTHER";
+export type CreditTransactionType = "CREDIT_CREATED" | "CREDIT_APPLIED" | "CREDIT_REFUNDED" | "ADJUSTMENT";
 
 export type SaleItem = {
   id: string;
@@ -509,6 +528,8 @@ export type SaleItem = {
   taxableAmount: number | string;
   taxAmount: number | string;
   lineTotal: number | string;
+  returnedQuantity?: number | string;
+  availableToReturn?: number | string;
 };
 
 export type Sale = {
@@ -538,6 +559,13 @@ export type Sale = {
   salesOrderId?: string | null;
   paidAmount?: number | string;
   outstandingAmount?: number | string;
+  originalTotal?: number | string;
+  completedReturnAmount?: number | string;
+  netSaleAmount?: number | string;
+  actualPaidAmount?: number | string;
+  customerCreditApplied?: number | string;
+  customerCreditAmount?: number | string;
+  returnStatus?: ReturnStatusSummary;
 };
 
 export type SaleSummary = {
@@ -551,6 +579,10 @@ export type SaleDashboard = {
   todayOrders: number;
   todayRevenue: number | string;
   recentSales: Sale[];
+  todayReturns?: number;
+  todayReturnAmount?: number | string;
+  outstandingReceivables?: number | string;
+  customerCreditLiability?: number | string;
 };
 
 export type SaleInvoice = {
@@ -596,12 +628,17 @@ export const saleApi = {
   create: (body: SalePayload) => apiRequest<Sale>("/api/v1/sales", { method: "POST", body: JSON.stringify(body) }),
   update: (id: string, body: SalePayload) =>
     apiRequest<Sale>(`/api/v1/sales/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  complete: (id: string, paymentMethod: PaymentMethod) =>
+  complete: (id: string, paymentMethod: PaymentMethod, extras?: { creditAmount?: number; paymentAmount?: number }) =>
     apiRequest<Sale>(`/api/v1/sales/${id}/complete`, {
       method: "POST",
-      body: JSON.stringify({ paymentMethod }),
+      body: JSON.stringify({ paymentMethod, ...extras }),
     }),
   cancel: (id: string) => apiRequest<Sale>(`/api/v1/sales/${id}/cancel`, { method: "POST", body: "{}" }),
+  applyCredit: (id: string, amount: number) =>
+    apiRequest<Sale>(`/api/v1/sales/${id}/apply-credit`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
 };
 
 export type LeadSource =
@@ -929,6 +966,136 @@ export const salesOrderApi = {
   ready: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/ready`, { method: "POST", body: "{}" }),
   cancel: (id: string) => apiRequest<SalesOrder>(`/api/v1/sales-orders/${id}/cancel`, { method: "POST", body: "{}" }),
   convertSale: (id: string) => apiRequest<Sale>(`/api/v1/sales-orders/${id}/convert-sale`, { method: "POST", body: "{}" }),
+};
+
+export type CustomerFinancial = {
+  customerId: string;
+  customerName: string;
+  totalSales: number | string;
+  totalPaid: number | string;
+  outstanding: number | string;
+  availableCredit: number | string;
+};
+
+export type CreditTransaction = {
+  id: string;
+  type: CreditTransactionType;
+  amount: number | string;
+  saleId: string | null;
+  saleReturnId: string | null;
+  refundId: string | null;
+  reference: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+};
+
+export type CustomerCredit = {
+  customerId: string;
+  customerName: string;
+  availableCredit: number | string;
+  transactions: CreditTransaction[];
+};
+
+export type SaleReturnItem = {
+  id: string;
+  saleItemId: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  barcode: string | null;
+  unit: string;
+  quantity: number | string;
+  unitPrice: number | string;
+  gstRate: number | string;
+  discount: number | string;
+  taxAmount: number | string;
+  totalAmount: number | string;
+  reason: ReturnReason | null;
+};
+
+export type SaleReturn = {
+  id: string;
+  returnNumber: string;
+  saleId: string;
+  saleNumber: string;
+  invoiceNumber: string | null;
+  customerId: string | null;
+  customerName: string;
+  status: SaleReturnStatus;
+  returnDate: string;
+  reason: ReturnReason | null;
+  notes: string | null;
+  subtotal: number | string;
+  discount: number | string;
+  taxAmount: number | string;
+  totalAmount: number | string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  completedAt: string | null;
+  items: SaleReturnItem[];
+};
+
+export type RefundRecord = {
+  id: string;
+  refundNumber: string;
+  saleId: string;
+  saleNumber: string;
+  invoiceNumber: string | null;
+  saleReturnId: string | null;
+  customerId: string | null;
+  customerName: string;
+  amount: number | string;
+  paymentMethod: PaymentMethod;
+  status: RefundStatus;
+  referenceNumber: string | null;
+  notes: string | null;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+export const returnApi = {
+  list: (
+    params: {
+      q?: string;
+      customerId?: string;
+      saleId?: string;
+      status?: SaleReturnStatus;
+      fromDate?: string;
+      toDate?: string;
+      page?: number;
+      size?: number;
+    } = {},
+  ) => apiRequest<PageResult<SaleReturn>>(`/api/v1/returns${queryString(params)}`),
+  get: (id: string) => apiRequest<SaleReturn>(`/api/v1/returns/${id}`),
+  create: (body: {
+    saleId: string;
+    returnDate?: string;
+    reason?: ReturnReason;
+    notes?: string | null;
+    items: { saleItemId: string; quantity: number; reason?: ReturnReason }[];
+  }) => apiRequest<SaleReturn>("/api/v1/returns", { method: "POST", body: JSON.stringify(body) }),
+  complete: (id: string) => apiRequest<SaleReturn>(`/api/v1/returns/${id}/complete`, { method: "POST", body: "{}" }),
+  cancel: (id: string) => apiRequest<SaleReturn>(`/api/v1/returns/${id}/cancel`, { method: "POST", body: "{}" }),
+};
+
+export const refundApi = {
+  list: (params: { q?: string; status?: RefundStatus; saleId?: string; customerId?: string } = {}) =>
+    apiRequest<RefundRecord[]>(`/api/v1/refunds${queryString(params)}`),
+  get: (id: string) => apiRequest<RefundRecord>(`/api/v1/refunds/${id}`),
+  create: (body: {
+    saleId: string;
+    saleReturnId?: string | null;
+    amount: number;
+    paymentMethod: PaymentMethod;
+    referenceNumber?: string | null;
+    notes?: string | null;
+  }) => apiRequest<RefundRecord>("/api/v1/refunds", { method: "POST", body: JSON.stringify(body) }),
+  complete: (id: string) => apiRequest<RefundRecord>(`/api/v1/refunds/${id}/complete`, { method: "POST", body: "{}" }),
+  cancel: (id: string) => apiRequest<RefundRecord>(`/api/v1/refunds/${id}/cancel`, { method: "POST", body: "{}" }),
 };
 
 export const paymentApi = {

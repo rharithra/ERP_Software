@@ -3,10 +3,18 @@ package in.retailflow.api.sales.web;
 import in.retailflow.api.catalog.dto.StatusUpdateRequest;
 import in.retailflow.api.common.api.ApiResponse;
 import in.retailflow.api.common.api.PageResponse;
+import in.retailflow.api.sales.dto.CreditTransactionResponse;
+import in.retailflow.api.sales.dto.CustomerCreditResponse;
+import in.retailflow.api.sales.dto.CustomerFinancialResponse;
 import in.retailflow.api.sales.dto.CustomerRequest;
 import in.retailflow.api.sales.dto.CustomerResponse;
 import in.retailflow.api.sales.dto.CustomerSummaryResponse;
+import in.retailflow.api.sales.dto.RefundResponse;
+import in.retailflow.api.sales.dto.SaleReturnResponse;
+import in.retailflow.api.sales.service.CustomerCreditService;
 import in.retailflow.api.sales.service.CustomerService;
+import in.retailflow.api.sales.service.RefundService;
+import in.retailflow.api.sales.service.SaleReturnService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -28,9 +36,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CustomerCreditService creditService;
+    private final SaleReturnService saleReturnService;
+    private final RefundService refundService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(
+            CustomerService customerService,
+            CustomerCreditService creditService,
+            SaleReturnService saleReturnService,
+            RefundService refundService) {
         this.customerService = customerService;
+        this.creditService = creditService;
+        this.saleReturnService = saleReturnService;
+        this.refundService = refundService;
     }
 
     @GetMapping
@@ -59,6 +77,36 @@ public class CustomerController {
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
     public ApiResponse<CustomerResponse> get(@PathVariable UUID id) {
         return ApiResponse.ok(customerService.get(id));
+    }
+
+    @GetMapping("/{id}/credit")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<CustomerCreditResponse> credit(@PathVariable UUID id) {
+        return ApiResponse.ok(creditService.forCustomer(id));
+    }
+
+    @GetMapping("/{id}/credit-transactions")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<List<CreditTransactionResponse>> creditTransactions(@PathVariable UUID id) {
+        return ApiResponse.ok(creditService.transactions(id));
+    }
+
+    @GetMapping("/{id}/financial")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<CustomerFinancialResponse> financial(@PathVariable UUID id) {
+        return ApiResponse.ok(creditService.financial(id));
+    }
+
+    @GetMapping("/{id}/returns")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<PageResponse<SaleReturnResponse>> returns(@PathVariable UUID id) {
+        return ApiResponse.ok(saleReturnService.list(null, id, null, null, null, null, 1, 100));
+    }
+
+    @GetMapping("/{id}/refunds")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER')")
+    public ApiResponse<List<RefundResponse>> refunds(@PathVariable UUID id) {
+        return ApiResponse.ok(refundService.list(null, null, null, id));
     }
 
     @PostMapping

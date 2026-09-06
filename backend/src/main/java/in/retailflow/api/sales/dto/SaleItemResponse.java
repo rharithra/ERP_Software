@@ -14,4 +14,6 @@ public record SaleItemResponse(
         BigDecimal discount,
         BigDecimal taxableAmount,
         BigDecimal taxAmount,
-        BigDecimal lineTotal) {}
+        BigDecimal lineTotal,
+        BigDecimal returnedQuantity,
+        BigDecimal availableToReturn) {}

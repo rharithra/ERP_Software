@@ -72,4 +72,6 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
             ORDER BY s.completedAt DESC
             """)
     List<Sale> findRecentCompleted(Pageable pageable);
+
+    List<Sale> findByCustomer_Id(UUID customerId);
 }

@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiRequestError, customerApi, paymentApi, type Customer, type CustomerPayload, type CustomerSummary, type PaymentRecord } from "@/lib/api";
+import { ApiRequestError, customerApi, type CreditTransaction, type Customer, type CustomerFinancial, type CustomerPayload, type CustomerSummary, type RefundRecord, type SaleReturn } from "@/lib/api";
 import { inr } from "@/lib/sale-math";
 
 const emptyForm = {
@@ -40,10 +40,10 @@ export function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detail, setDetail] = useState<Customer | null>(null);
-  const [detailPayments, setDetailPayments] = useState<PaymentRecord[]>([]);
-  const [detailOutstanding, setDetailOutstanding] = useState(0);
-  const [detailPaid, setDetailPaid] = useState(0);
-  const [detailSales, setDetailSales] = useState(0);
+  const [detailFinancial, setDetailFinancial] = useState<CustomerFinancial | null>(null);
+  const [detailCredit, setDetailCredit] = useState<CreditTransaction[]>([]);
+  const [detailReturns, setDetailReturns] = useState<SaleReturn[]>([]);
+  const [detailRefunds, setDetailRefunds] = useState<RefundRecord[]>([]);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
@@ -76,19 +76,29 @@ export function CustomersPage() {
 
   useEffect(() => {
     if (!detail) {
-      setDetailPayments([]);
+      setDetailFinancial(null);
+      setDetailCredit([]);
+      setDetailReturns([]);
+      setDetailRefunds([]);
       return;
     }
-    Promise.all([paymentApi.list({ customerId: detail.id }), paymentApi.outstanding("ALL")])
-      .then(([history, rows]) => {
-        const mine = rows.filter((row) => row.customerId === detail.id);
-        setDetailPayments(history);
-        setDetailOutstanding(mine.reduce((sum, row) => sum + Number(row.outstanding), 0));
-        setDetailPaid(mine.reduce((sum, row) => sum + Number(row.paid), 0));
-        setDetailSales(mine.reduce((sum, row) => sum + Number(row.grandTotal), 0));
+    Promise.all([
+      customerApi.financial(detail.id),
+      customerApi.credit(detail.id),
+      customerApi.returns(detail.id),
+      customerApi.refunds(detail.id),
+    ])
+      .then(([financial, credit, returns, refunds]) => {
+        setDetailFinancial(financial);
+        setDetailCredit(credit.transactions);
+        setDetailReturns(returns.items);
+        setDetailRefunds(refunds);
       })
       .catch(() => {
-        setDetailPayments([]);
+        setDetailFinancial(null);
+        setDetailCredit([]);
+        setDetailReturns([]);
+        setDetailRefunds([]);
       });
   }, [detail]);
 
@@ -420,15 +430,19 @@ export function CustomersPage() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Total sales</dt>
-                  <dd>{inr(detailSales)}</dd>
+                  <dd>{inr(detailFinancial?.totalSales ?? 0)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Total paid</dt>
-                  <dd>{inr(detailPaid)}</dd>
+                  <dd>{inr(detailFinancial?.totalPaid ?? 0)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Outstanding</dt>
-                  <dd>{inr(detailOutstanding)}</dd>
+                  <dd>{inr(detailFinancial?.outstanding ?? 0)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Available credit</dt>
+                  <dd>{inr(detailFinancial?.availableCredit ?? 0)}</dd>
                 </div>
                 <div className="sm:col-span-2">
                   <dt className="text-muted-foreground">Address</dt>
@@ -436,20 +450,51 @@ export function CustomersPage() {
                 </div>
               </dl>
               <div>
-                <p className="mb-2 text-sm font-medium">Payment history</p>
-                {detailPayments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
+                <p className="mb-2 text-sm font-medium">Returns</p>
+                {detailReturns.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No returns.</p>
                 ) : (
                   <ul className="space-y-2 text-sm">
-                    {detailPayments.map((payment) => (
-                      <li key={payment.id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+                    {detailReturns.map((row) => (
+                      <li key={row.id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+                        <Link className="font-mono text-xs text-primary" to={`/app/returns/${row.id}`}>
+                          {row.returnNumber}
+                        </Link>
                         <span>
-                          <span className="font-mono text-xs">{payment.paymentNumber}</span>
-                          <span className="ml-2 text-muted-foreground">{payment.paymentMethod}</span>
+                          {inr(row.totalAmount)} · {row.status}
                         </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-medium">Refunds</p>
+                {detailRefunds.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No refunds.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {detailRefunds.map((refund) => (
+                      <li key={refund.id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+                        <span className="font-mono text-xs">{refund.refundNumber}</span>
                         <span>
-                          {inr(payment.amount)} · {payment.paymentDate}
+                          {inr(refund.amount)} · {refund.status}
                         </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-medium">Credit ledger</p>
+                {detailCredit.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No credit transactions yet.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {detailCredit.map((tx) => (
+                      <li key={tx.id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+                        <span>{tx.type.replaceAll("_", " ")}</span>
+                        <span>{inr(tx.amount)}</span>
                       </li>
                     ))}
                   </ul>

@@ -45,6 +45,18 @@ public final class ErrorCodes {
     public static final String INVALID_ROLE = "INVALID_ROLE";
     public static final String CANNOT_MODIFY_OWNER = "CANNOT_MODIFY_OWNER";
     public static final String CANNOT_MODIFY_SELF = "CANNOT_MODIFY_SELF";
+    public static final String RETURN_QUANTITY_EXCEEDS_AVAILABLE = "RETURN_QUANTITY_EXCEEDS_AVAILABLE";
+    public static final String RETURN_ALREADY_COMPLETED = "RETURN_ALREADY_COMPLETED";
+    public static final String RETURN_ALREADY_CANCELLED = "RETURN_ALREADY_CANCELLED";
+    public static final String RETURN_HAS_NO_ITEMS = "RETURN_HAS_NO_ITEMS";
+    public static final String SALE_NOT_RETURNABLE = "SALE_NOT_RETURNABLE";
+    public static final String REFUND_EXCEEDS_AVAILABLE_CREDIT = "REFUND_EXCEEDS_AVAILABLE_CREDIT";
+    public static final String REFUND_ALREADY_COMPLETED = "REFUND_ALREADY_COMPLETED";
+    public static final String CUSTOMER_CREDIT_INSUFFICIENT = "CUSTOMER_CREDIT_INSUFFICIENT";
+    public static final String INVALID_RETURN_STATUS = "INVALID_RETURN_STATUS";
+    public static final String INVALID_REFUND_STATUS = "INVALID_REFUND_STATUS";
+    public static final String RETURN_NOT_FOUND = "RETURN_NOT_FOUND";
+    public static final String REFUND_NOT_FOUND = "REFUND_NOT_FOUND";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
     private ErrorCodes() {}

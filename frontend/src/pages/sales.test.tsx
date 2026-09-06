@@ -30,6 +30,10 @@ vi.mock("@/lib/api", async (importOriginal) => {
       create: vi.fn(),
       update: vi.fn(),
       updateStatus: vi.fn(),
+      credit: vi.fn(),
+      financial: vi.fn(),
+      returns: vi.fn(),
+      refunds: vi.fn(),
     },
     saleApi: {
       list: vi.fn(),
@@ -41,6 +45,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       update: vi.fn(),
       complete: vi.fn(),
       cancel: vi.fn(),
+      applyCredit: vi.fn(),
     },
     productApi: { list: vi.fn() },
     inventoryApi: { list: vi.fn() },
@@ -209,6 +214,12 @@ describe("POS cart", () => {
         },
       ]),
     );
+    vi.mocked(customerApi.credit).mockResolvedValue({
+      customerId: customer.id,
+      customerName: customer.name,
+      availableCredit: "0",
+      transactions: [],
+    });
     vi.mocked(saleApi.create).mockReset();
     vi.mocked(saleApi.complete).mockReset();
     vi.mocked(saleApi.invoice).mockResolvedValue({

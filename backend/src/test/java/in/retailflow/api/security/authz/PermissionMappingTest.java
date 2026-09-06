@@ -23,6 +23,6 @@ class PermissionMappingTest {
     @Test
     void cashierIsLimitedToSalesAndPayments() {
         assertThat(Permission.forRole(TenantRole.CASHIER))
-                .containsExactlyInAnyOrder(Permission.SALE_CREATE, Permission.PAYMENT_RECORD);
+                .containsExactlyInAnyOrder(Permission.SALE_CREATE, Permission.PAYMENT_RECORD, Permission.RETURN_MANAGE);
     }
 }
