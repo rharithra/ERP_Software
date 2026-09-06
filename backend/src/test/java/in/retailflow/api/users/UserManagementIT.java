@@ -44,6 +44,24 @@ class UserManagementIT {
     private PasswordEncoder passwordEncoder;
 
     @Test
+    void userManagementControllerIsRegisteredAndOwnerCanListUsers() throws Exception {
+        ResponseEntity<String> docs = rest.getForEntity("/v3/api-docs", String.class);
+        assertThat(docs.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode paths = mapper.readTree(docs.getBody()).path("paths");
+        assertThat(paths.has("/api/v1/users")).isTrue();
+        assertThat(paths.path("/api/v1/users").has("get")).isTrue();
+
+        SignupResult owner = AuthTestSupport.signup(rest, mapper, "Listed Store");
+        ResponseEntity<String> listed = get(owner.token(), "/api/v1/users");
+        assertThat(listed.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode members = mapper.readTree(listed.getBody()).path("data");
+        assertThat(members.isArray()).isTrue();
+        assertThat(members).anyMatch(node -> owner.email().equals(node.path("email").asText())
+                && "OWNER".equals(node.path("role").asText())
+                && "ACTIVE".equals(node.path("status").asText()));
+    }
+
+    @Test
     void ownerCanManageStaffAndCannotModifySelfOrCreateOwner() throws Exception {
         SignupResult owner = AuthTestSupport.signup(rest, mapper, "Team Store");
         String token = owner.token();
